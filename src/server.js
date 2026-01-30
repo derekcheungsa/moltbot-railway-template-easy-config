@@ -301,11 +301,11 @@ app.get("/setup", requireSetupAuth, (_req, res) => {
 });
 
 app.get("/setup/api/status", requireSetupAuth, async (_req, res) => {
-  const version = await runCmd(OPENCLAW_NODE, clawArgs(["--version"]));
-  const channelsHelp = await runCmd(
-    OPENCLAW_NODE,
-    clawArgs(["channels", "add", "--help"]),
-  );
+  // Run version and channels help commands in parallel for faster response
+  const [version, channelsHelp] = await Promise.all([
+    runCmd(OPENCLAW_NODE, clawArgs(["--version"])),
+    runCmd(OPENCLAW_NODE, clawArgs(["channels", "add", "--help"])),
+  ]);
 
   // We reuse Openclaw's own auth-choice grouping logic indirectly by hardcoding the same group defs.
   // This is intentionally minimal; later we can parse the CLI help output to stay perfectly in sync.
