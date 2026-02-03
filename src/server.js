@@ -423,7 +423,13 @@ function buildOnboardArgs(payload) {
   ];
 
   if (payload.authChoice) {
-    args.push("--auth-choice", payload.authChoice);
+    // Map auth choice to Openclaw's recognized auth choices
+    // (Atlas Cloud uses OpenAI-compatible API, so map it to openai-api-key)
+    const authChoiceMap = {
+      "atlas-api-key": "openai-api-key",
+    };
+    const effectiveAuthChoice = authChoiceMap[payload.authChoice] || payload.authChoice;
+    args.push("--auth-choice", effectiveAuthChoice);
 
     // Map secret to correct flag for common choices.
     const secret = (payload.authSecret || "").trim();
