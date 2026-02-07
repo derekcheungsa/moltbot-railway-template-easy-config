@@ -44,7 +44,7 @@ The setup wizard supports these AI providers:
 - **OpenAI** (GPT models)
 - **Google** (Gemini)
 - **OpenRouter**
-- **Atlas Cloud**
+- **Atlas Cloud** - [See testing guide →](docs/ATLAS_CLOUD_TESTING.md) *(NEW: Model selection)*
 - **Vercel AI Gateway**
 - **Moonshot AI**
 - **Z.AI (GLM 4.7)**
@@ -86,3 +86,8 @@ docker run --rm -p 8080:8080 \
 # Open http://localhost:8080/setup
 # Password: test
 ```
+
+## Documentation
+
+- **[Atlas Cloud Testing Guide](docs/ATLAS_CLOUD_TESTING.md)** - Step-by-step guide for deploying and testing OpenClaw with Atlas Cloud on Railway
+- **[Learning OpenClaw Tutorial](docs/learning-openclaw-tutorial.md)** - Comprehensive deployment and configuration tutorial
