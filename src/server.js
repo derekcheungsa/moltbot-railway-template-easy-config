@@ -775,8 +775,10 @@ app.post("/setup/api/run", requireSetupAuth, async (req, res) => {
       }
 
       // Configure Atlas Cloud if selected (using OpenAI-compatible endpoint)
+      console.log(`[atlas] Checking authChoice: "${payload.authChoice}"`);
       if (payload.authChoice === "atlas-api-key") {
         const atlasModel = payload.atlasModel || "minimaxai/minimax-m2.1";
+        console.log(`[atlas] Configuring Atlas Cloud provider with model: ${atlasModel}`);
 
         // Configure Atlas Cloud as a custom OpenAI-compatible provider
         const providerConfig = {
@@ -786,18 +788,24 @@ app.post("/setup/api/run", requireSetupAuth, async (req, res) => {
           models: [{ id: atlasModel, name: atlasModel }]
         };
 
-        await runCmd(
+        console.log(`[atlas] Provider config:`, JSON.stringify(providerConfig));
+
+        const setProviderResult = await runCmd(
           OPENCLAW_NODE,
           clawArgs(["config", "set", "--json", "models.providers.atlas", JSON.stringify(providerConfig)]),
         );
+        console.log(`[atlas] Set provider result: exit=${setProviderResult.code}`, setProviderResult.output || "(no output)");
 
         // Set the active model to use Atlas Cloud
-        await runCmd(
+        const setModelResult = await runCmd(
           OPENCLAW_NODE,
           clawArgs(["config", "set", "models.model", `atlas:${atlasModel}`]),
         );
+        console.log(`[atlas] Set model result: exit=${setModelResult.code}`, setModelResult.output || "(no output)");
 
         extra += `\n[atlas] configured Atlas Cloud provider (model: ${atlasModel})\n`;
+      } else {
+        console.log(`[atlas] Skipping Atlas Cloud configuration (authChoice was: ${payload.authChoice})`);
       }
 
       // Apply changes immediately.
