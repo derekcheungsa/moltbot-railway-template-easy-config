@@ -2,8 +2,8 @@
 
 > A YouTube video script based on the Learning OpenClaw Tutorial
 
-**Video Title:** Deploy OpenClaw AI Coding Assistant to Railway in 10 Minutes (Complete Guide)
-**Estimated Duration:** 25-30 minutes
+**Video Title:** Deploy Your Personal AI Agent to Railway in 10 Minutes (Complete OpenClaw Guide)
+**Estimated Duration:** 28-32 minutes
 **Difficulty:** Beginner to Intermediate
 
 ---
@@ -15,12 +15,19 @@
 **[Visual: Thumbnail showing OpenClaw logo + Railway logo + "Deploy in 10 Minutes"]**
 
 **Host (on camera):**
-"What if you could deploy your own AI coding assistant to the cloud in just 10 minutes - without writing a single deployment script?
+"What if you could deploy your own personal AI agent to the cloud in just a couple of minutes - one that works across all your favorite apps, can see your screen, hear your voice, and help with anything from coding to research to daily tasks?
 
-Hi, I'm [Your Name], and today I'm going to show you how to deploy OpenClaw - an open-source AI coding assistant - to Railway. OpenClaw is like having your own personal Claude or ChatGPT that can read your codebase, write code, and even integrate with Discord, Telegram, and Slack.
+Hi, I'm [Your Name], and today I'm going to show you how to deploy OpenClaw - an open-source personal AI agent platform. OpenClaw is way more than just a coding assistant. It's a full-featured AI agent that can:
+
+- Work in 13+ platforms including WhatsApp, Telegram, Discord, Slack, Teams, and more
+- Use voice commands with always-on speech recognition
+- Control a browser and interact with web pages
+- See and analyze images through a live canvas
+- Extend its capabilities with hundreds of community-built skills
+- Run completely on your own infrastructure - your data, your keys, your rules
 
 By the end of this video, you'll have:
-- A fully functional AI assistant running in the cloud
+- A fully functional AI agent running in the cloud
 - Integration with Atlas Cloud for affordable AI models
 - Optional messaging platform integrations
 - Persistent storage that survives redeploys
@@ -36,19 +43,63 @@ Let's dive in!"
 **[Visual: Animated diagram of OpenClaw architecture]**
 
 **Host (voiceover):**
-"First, let's talk about what OpenClaw actually is. OpenClaw is an open-source AI coding assistant platform that gives you:
+"First, let's talk about what OpenClaw actually is. OpenClaw is an **open agent platform** that gives you a personal AI assistant running on your own infrastructure. Here's what makes it special:
 
-- **AI-powered code generation** - It can write, refactor, and debug code
-- **Multi-platform integration** - Use it in Discord, Telegram, Slack, or a web UI
-- **Multiple AI providers** - Anthropic, OpenAI, Google, Atlas Cloud, and more
-- **Extensible via Skills** - Add custom capabilities like a package manager
-- **Self-hosted** - Your data stays on your servers
+**Multi-Channel Access:**
+OpenClaw works wherever you are - WhatsApp, Telegram, Discord, Slack, Google Chat, Microsoft Teams, Signal, iMessage, Matrix, Zalo, or just a web browser. Your AI assistant follows you across all your favorite apps.
 
-It's like having a senior developer available 24/7, and it works with popular AI models including Claude, GPT-4, and cost-effective options from Atlas Cloud."
+**Voice & Vision:**
+With Voice Wake and Talk Mode, you can have continuous voice conversations. The Live Canvas feature lets the AI see and interact with visual content - it can analyze images, create diagrams, and even control a browser to navigate websites.
+
+**Powerful Tools:**
+- **Browser control** - OpenClaw can navigate websites, fill forms, and gather information
+- **Camera & screen recording** - Capture screenshots, screen recordings, and photos
+- **File operations** - Read, write, and edit files on your workspace
+- **Webhooks & automation** - Connect to Gmail, schedule tasks with cron, and more
+
+**Extensible Skills:**
+The AgentSkills system and ClawHub registry give you access to hundreds of community-built extensions. From PDF processing to TRMNL display integration, there's a skill for almost anything.
+
+**Local-First Privacy:**
+Unlike SaaS assistants, OpenClaw runs on your infrastructure - laptop, homelab, or VPS. Your keys, your data, your rules.
+
+**AI Model Flexibility:**
+Works with all major AI providers - Anthropic Claude, OpenAI GPT, Google Gemini, and cost-effective options from Atlas Cloud. Choose the right model for each task.
+
+It's like having a personal research assistant, coder, automation expert, and companion - all in one, available 24/7 across all your devices and platforms."
 
 ---
 
-### [3:00] - Prerequisites
+### [3:00] - Why OpenClaw? What Makes It Different
+
+**[Visual: Comparison chart of OpenClaw vs. other AI assistants]**
+
+**Host (voiceover):**
+"Before we dive into the setup, let me explain why OpenClaw is different from other AI assistants like ChatGPT, Claude, or Copilot.
+
+**Your Infrastructure, Your Data, Your Rules**
+Unlike SaaS AI services that process your data on their servers, OpenClaw runs where YOU choose - your laptop, homelab, VPS, or cloud provider like Railway. Your API keys, your data, your privacy.
+
+**Works Everywhere You Do**
+ChatGPT lives in a browser. Claude lives in Claude.ai. OpenClaw lives in WhatsApp, Telegram, Discord, Slack, Teams, and more. Your AI assistant is wherever you already are, without switching apps.
+
+**True Extensibility via Skills**
+Most AI assistants are black boxes. OpenClaw's Skills system lets you extend its capabilities with community-built packages or your own custom tools. Need it to work with your company's internal API? Build a skill. Want specialized data analysis? Install a skill.
+
+**Vision, Voice, and Browser Control**
+OpenClaw can see your screen through the Canvas, hear you via Voice Wake, and even control a browser to navigate websites. It's not just generating text - it's taking action.
+
+**Multi-Model Flexibility**
+Not locked into one provider. Use Claude for reasoning, GPT-4 for coding, DeepSeek for cost efficiency. Switch per-task or per-conversation.
+
+**The Gateway Architecture**
+OpenClaw's Gateway is a local control plane that manages sessions, tools, channels, and events. This means consistent behavior across all platforms and the ability to route different conversations to different specialized agents.
+
+It's the difference between using a tool and owning a platform."
+
+---
+
+### [5:00] - Prerequisites
 
 **[Visual: Checklist on screen]**
 
@@ -70,7 +121,7 @@ That's it! If you have these three accounts, you're ready to go."
 
 ---
 
-### [4:30] - Getting Your Atlas Cloud API Key
+### [6:30] - Getting Your Atlas Cloud API Key
 
 **[Visual: Screen recording of Atlas Cloud website]**
 
@@ -89,7 +140,7 @@ That's it! If you have these three accounts, you're ready to go."
 
 ---
 
-### [6:00] - Deploying to Railway
+### [8:00] - Deploying to Railway
 
 **[Visual: Screen recording of Railway deployment]**
 
@@ -110,7 +161,7 @@ Railway will automatically detect the Dockerfile and build OpenClaw from source.
 
 ---
 
-### [8:00] - Configuring Railway Variables
+### [10:00] - Configuring Railway Variables
 
 **[Visual: Railway Variables settings screen]**
 
@@ -133,7 +184,7 @@ These paths point to a persistent volume, which means your configuration and dat
 
 ---
 
-### [9:30] - Adding a Volume for Persistence
+### [11:30] - Adding a Volume for Persistence
 
 **[Visual: Railway Volume settings]**
 
@@ -152,7 +203,7 @@ Without this volume, every time Railway redeploys your container, you'd lose all
 
 ---
 
-### [10:30] - Accessing the Setup Wizard
+### [12:30] - Accessing the Setup Wizard
 
 **[Visual: Browser showing Railway deployment URL]**
 
@@ -169,7 +220,7 @@ This is the OpenClaw setup wizard - a friendly web interface that handles all th
 
 ---
 
-### [11:30] - Step 1: Welcome
+### [13:30] - Step 1: Welcome
 
 **[Visual: Setup wizard welcome screen]**
 
@@ -182,7 +233,7 @@ This wizard is going to configure your AI provider, set up your gateway, and opt
 
 ---
 
-### [12:00] - Step 2: Configure Authentication
+### [14:00] - Step 2: Configure Authentication
 
 **[Visual: Auth provider selection screen]**
 
@@ -211,7 +262,7 @@ For the Wizard Flow, select 'Quickstart' to use sensible defaults."
 
 ---
 
-### [14:00] - Step 3: Channels (Optional)
+### [16:00] - Step 3: Channels (Optional)
 
 **[Visual: Channels configuration screen]**
 
@@ -226,7 +277,7 @@ Click 'Next' to continue."
 
 ---
 
-### [15:00] - Step 4: Review
+### [17:00] - Step 4: Review
 
 **[Visual: Review screen showing all settings]**
 
@@ -245,7 +296,7 @@ The wizard will now configure OpenClaw in the background. This typically takes 3
 
 ---
 
-### [16:00] - Step 5: Complete
+### [18:00] - Step 5: Complete
 
 **[Visual: Completion screen]**
 
@@ -262,26 +313,34 @@ Let's test it out!"
 
 ---
 
-### [17:00] - Testing Your Deployment
+### [19:00] - Testing Your Deployment
 
 **[Visual: Typing test message in OpenClaw UI]**
 
 **Host (voiceover):**
 "Let's send a test message to make sure everything is working.
 
-Type: 'Hello! Can you explain what you are?'
+Type: 'Hello! Can you explain what you are capable of?'
 
-OpenClaw should respond that it's an AI coding assistant powered by the model you selected.
+OpenClaw should respond with an overview of its capabilities - from coding to research to automation.
 
-Let's try something more useful. Ask it: 'Can you write a Python function to calculate fibonacci numbers?'
+Let's try something more interesting. Ask it: 'Can you write a Python function to calculate fibonacci numbers?'
 
-Watch as OpenClaw generates the code, explains it, and even provides examples."
+Watch as OpenClaw generates the code, explains it, and even provides examples.
+
+But OpenClaw can do so much more than code. Try asking it to:
+- 'Research the latest trends in AI and summarize them'
+- 'Help me plan a trip to Japan with a budget of $3000'
+- 'Create a diagram showing the architecture of a web application'
+- 'Write and send a professional email to my team'
+
+The beauty of OpenClaw is that it's a general-purpose AI agent, not limited to just coding tasks."
 
 **[Visual: Code generation in action]**
 
 ---
 
-### [18:30] - Testing via API
+### [20:30] - Testing via API
 
 **[Visual: Terminal with curl command]**
 
@@ -306,7 +365,7 @@ Replace `your-app` with your actual Railway URL and `YOUR_GATEWAY_TOKEN` with th
 
 ---
 
-### [19:30] - Monitoring and Logs
+### [21:30] - Monitoring and Logs
 
 **[Visual: Railway logs screen]**
 
@@ -326,7 +385,7 @@ Key log entries to look for:
 
 ---
 
-### [20:30] - Backups and Exports
+### [22:30] - Backups and Exports
 
 **[Visual: Export function in setup wizard]**
 
@@ -343,7 +402,7 @@ This includes your configuration, API keys, workspace files, and agent memory - 
 
 ---
 
-### [21:30] - Atlas Cloud Models Reference
+### [23:30] - Atlas Cloud Models Reference
 
 **[Visual: Table of Atlas Cloud models with pricing]**
 
@@ -364,20 +423,43 @@ If you're looking for the lowest cost, go with DeepSeek R1. For the best balance
 
 ---
 
-### [22:30] - OpenClaw Skills
+### [24:30] - OpenClaw Skills & ClawHub
 
 **[Visual: ClawHub website screenshot]**
 
 **Host (on camera):**
-"One of the most powerful features of OpenClaw is Skills - add-on capabilities that extend what the AI can do.
+"One of the most powerful features of OpenClaw is its Skills system - and this is what truly sets it apart from other AI assistants.
 
-OpenClaw uses a system called AgentSkills, and there's a public registry called ClawHub at clawhub.com.
+**What are Skills?**
 
-Popular skills include:
-- **PDF** - Comprehensive PDF toolkit
-- **TRMNL Display** - Generate content for e-ink displays
-- **Skill Exporter** - Export skills as microservices
-- And many more!
+Skills are modular extensions that give your AI agent new capabilities. Think of them like plugins for your AI assistant. Each skill adds specific tools and knowledge that OpenClaw can use when needed.
+
+**The AgentSkills System**
+
+OpenClaw uses AgentSkills - a framework that allows skills to:
+- Define new tools the AI can call
+- Provide domain-specific knowledge
+- Integrate external APIs and services
+- Modify how the agent processes requests
+
+**ClawHub - The Skills Registry**
+
+ClawHub at clawhub.ai is a fast skill registry with vector search. This means OpenClaw can automatically find and suggest relevant skills based on what you're trying to do. It's like having an app store for your AI agent!
+
+**Popular Skills Available:**
+
+- **PDF** - Extract text, images, and metadata from PDF documents
+- **TRMNL Display** - Generate formatted content for e-ink displays
+- **Skill Exporter** - Export skills as standalone microservices
+- **Browser Automation** - Enhanced web scraping and form filling
+- **Data Analysis** - Work with CSVs, Excel files, and databases
+- **Image Processing** - Manipulate and analyze images
+- **Calendar Integration** - Connect to Google Calendar, Outlook, etc.
+- **Note Taking** - Integration with Notion, Obsidian, and other note apps
+- **Weather** - Real-time weather data and forecasts
+- And hundreds more!
+
+**Installing Skills**
 
 To install a skill, you use the ClawHub CLI:
 
@@ -386,11 +468,15 @@ npm i -g clawhub
 clawhub install pdf
 ```
 
-Skills are automatically loaded into your OpenClaw instance."
+Skills are automatically discovered and loaded into your OpenClaw instance.
+
+**Creating Custom Skills**
+
+You can also create your own skills! A skill is just a markdown file with specific structure that defines tools and knowledge. This makes it incredibly easy to extend OpenClaw for your specific needs - whether that's company-specific APIs, proprietary data sources, or custom workflows."
 
 ---
 
-### [23:30] - Troubleshooting Common Issues
+### [26:00] - Troubleshooting Common Issues
 
 **[Visual: Troubleshooting checklist]**
 
@@ -416,24 +502,34 @@ For more help, check the documentation links in the description below."
 
 ---
 
-### [24:30] - Next Steps
+### [27:00] - Next Steps
 
 **[Visual: Summary of next steps]**
 
 **Host (on camera):**
 "Congratulations! You now have OpenClaw running on Railway. Here are some next steps you might want to explore:
 
-1. **Configure messaging channels** - Add Discord, Telegram, or Slack integration
-2. **Install Skills** - Explore ClawHub for useful add-ons
-3. **Configure web search** - Enable Brave API for web search capabilities
-4. **Create custom skills** - Build your own specialized tools
-5. **Join the community** - Check out the OpenClaw Discord and GitHub discussions
+1. **Configure messaging channels** - Add Discord, Telegram, Slack, WhatsApp, or Teams integration to chat with your AI agent wherever you already are
+
+2. **Install Skills** - Explore ClawHub for useful add-ons. Start with the PDF skill for document processing, or browse the hundreds of community-built skills
+
+3. **Configure web search** - Enable Brave API for real-time web search capabilities, giving your AI access to current information
+
+4. **Explore the Canvas** - Try out OpenClaw's visual workspace where the AI can create diagrams, mind maps, and visual content
+
+5. **Set up voice commands** - If you're using the desktop app, enable Voice Wake and Talk Mode for hands-free voice conversations
+
+6. **Create custom skills** - Build your own specialized tools tailored to your workflow or business needs
+
+7. **Connect companion apps** - Set up the iOS or Android nodes for mobile access, including camera and location features
+
+8. **Join the community** - Check out the OpenClaw Discord and GitHub discussions to share your creations and learn from other users
 
 All the links you need are in the description below."
 
 ---
 
-### [25:30] - Outro
+### [28:00] - Outro
 
 **[Visual: Host on camera]**
 
@@ -445,12 +541,15 @@ You've learned:
 - How to configure Atlas Cloud for affordable AI models
 - How to use the setup wizard for zero-configuration deployment
 - How to test your deployment and troubleshoot issues
+- About OpenClaw's powerful capabilities across voice, vision, automation, and more
+
+Remember, OpenClaw isn't just for coding - it's a complete personal AI agent that can help with research, writing, planning, automation, and so much more. The Skills system via ClawHub means there's almost no limit to what you can extend it to do.
 
 If you found this video helpful, please give it a like and subscribe for more tutorials on AI, cloud deployment, and developer tools.
 
-And let me know in the comments - what would YOU build with your own AI coding assistant?
+And let me know in the comments - what would YOU build with your own personal AI agent?
 
-Until next time, happy coding!"
+Until next time, happy building!"
 
 **[Visual: End screen with subscribe button and related videos]**
 
@@ -459,60 +558,74 @@ Until next time, happy coding!"
 ## Video Metadata
 
 ### Tags
-`openclaw` `railway` `ai coding assistant` `claude` `chatgpt` `cloud deployment` `atlas cloud` `docker` `devops` `tutorial`
+`openclaw` `railway` `ai agent` `personal ai assistant` `claude` `chatgpt` `cloud deployment` `atlas cloud` `docker` `devops` `tutorial` `agent skills` `clawhub` `self-hosted ai` `ai automation`
 
 ### Description (for YouTube)
 
-Deploy your own AI coding assistant to the cloud in just 10 minutes! In this complete tutorial, I'll show you how to deploy OpenClaw - an open-source AI coding platform - to Railway.
+Deploy your own personal AI agent to the cloud in just 10 minutes! In this complete tutorial, I'll show you how to deploy OpenClaw - an open-source AI agent platform - to Railway.
+
+**What is OpenClaw?**
+OpenClaw is way more than just a coding assistant. It's a full-featured personal AI agent platform that works across 13+ platforms including WhatsApp, Telegram, Discord, Slack, Teams, and more. It features voice commands, a live canvas for visual content, browser automation, and hundreds of community-built skills.
 
 You'll learn:
 - How to deploy OpenClaw to Railway with zero configuration
 - How to set up Atlas Cloud for affordable AI models
 - How to use the web-based setup wizard
 - How to test and troubleshoot your deployment
+- About OpenClaw's powerful Skills system via ClawHub
 
-OpenClaw integrates with Discord, Telegram, Slack, and works with Claude, GPT-4, and other AI models. It's like having your own AI pair programmer available 24/7!
+OpenClaw works with Claude, GPT-4, Gemini, and cost-effective models from Atlas Cloud. It's like having your own personal AI assistant available 24/7 across all your devices and platforms - completely self-hosted with your data staying on your infrastructure!
 
 **Timestamps:**
 0:00 - Intro
 1:30 - What is OpenClaw?
-3:00 - Prerequisites
-4:30 - Getting Atlas Cloud API Key
-6:00 - Deploying to Railway
-8:00 - Configuring Variables
-9:30 - Adding Persistent Volume
-10:30 - Accessing Setup Wizard
-11:30 - Setup Wizard Walkthrough
-17:00 - Testing Your Deployment
-18:30 - API Testing
-20:30 - Monitoring & Logs
-21:30 - Backups & Exports
-22:30 - Atlas Cloud Models Reference
-23:30 - OpenClaw Skills
-24:30 - Troubleshooting
-25:30 - Outro
+3:00 - Why OpenClaw? What Makes It Different
+5:00 - Prerequisites
+6:30 - Getting Atlas Cloud API Key
+8:00 - Deploying to Railway
+10:00 - Configuring Variables
+11:30 - Adding Persistent Volume
+12:30 - Accessing Setup Wizard
+13:30 - Setup Wizard Walkthrough
+19:00 - Testing Your Deployment
+20:30 - API Testing
+21:30 - Monitoring & Logs
+22:30 - Backups & Exports
+23:30 - Atlas Cloud Models Reference
+24:30 - OpenClaw Skills & ClawHub
+26:00 - Troubleshooting
+27:00 - Next Steps
+28:00 - Outro
 
 **Links:**
 - OpenClaw: https://github.com/openclaw/openclaw
+- OpenClaw Docs: https://docs.openclaw.ai
 - Railway: https://railway.app
 - Atlas Cloud: https://www.atlascloud.ai
-- ClawHub: https://clawhub.com
+- ClawHub: https://clawhub.ai
 - Full Tutorial: https://github.com/[your-repo]/blob/main/docs/learning-openclaw-tutorial.md
 
 ### Thumbnail Text Suggestions
 
 ```
-Deploy AI Assistant
-to Railway
+Deploy Your Personal
+AI Agent to Railway
 10 Minutes
 No Config Needed!
 ```
 
 ```
 OpenClaw + Railway
-Your Own AI
-Coding Assistant
+Your Own AI Agent
+13+ Platforms
 Complete Guide
+```
+
+```
+Self-Host Your AI
+Assistant Today
+Voice • Vision • Skills
+OpenClaw on Railway
 ```
 
 ---
@@ -540,6 +653,7 @@ Complete Guide
 
 ---
 
-**Version:** 1.0
+**Version:** 1.1
 **Created:** 2026-02-10
+**Updated:** 2026-02-16
 **Based on:** learning-openclaw-tutorial.md (v1.0)
