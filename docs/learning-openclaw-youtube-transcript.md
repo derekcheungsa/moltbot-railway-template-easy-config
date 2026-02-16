@@ -257,17 +257,14 @@ Then in the Auth Method dropdown, select 'Atlas Cloud API key.'
 
 Paste the API key you got earlier from Atlas Cloud.
 
-**New Feature:** Below that, you'll see 'Atlas Cloud Model' - this lets you choose which specific AI model to use. The options include:
+**New Feature:** Below that, you'll see 'Atlas Cloud Model' - this lets you choose which specific AI model to use. The 4 most popular models are:
 
-- **MiniMax M2.1** (default) - Great for general coding, fast response times
-- **DeepSeek R1** - Optimized for reasoning and complex logic
-- **Z.AI GLM-4.7** - Best for Chinese language
-- **KwaiKAT Coder Pro** - Has a huge 256K context window for large files
-- **Moonshot V1 128K** - Also great for long documents
-- **Zhipu GLM-4 5B Plus** - Most cost-effective option
-- **Qwen 2.5 Coder 32B** - Specialized for code
+- **MiniMax M2.1** (default) - Great for general tasks, fast response times, excellent value
+- **Claude 3.5 Sonnet** - Anthropic's popular model for nuanced understanding and analysis
+- **GPT-4o** - OpenAI's flagship model with strong multimodal capabilities
+- **DeepSeek R1** - Top-tier reasoning model with advanced chain-of-thought capabilities
 
-For most coding tasks, I recommend starting with MiniMax M2.1.
+For most users, I recommend starting with MiniMax M2.1 for its excellent balance of speed and quality.
 
 For the Wizard Flow, select 'Quickstart' to use sensible defaults."
 
@@ -422,15 +419,12 @@ This includes your configuration, API keys, workspace files, and agent memory - 
 
 | Model | Context | Input Price | Output Price | Best For |
 |-------|---------|-------------|--------------|----------|
-| MiniMax M2.1 | 197K | $0.30/M | $1.20/M | General coding |
-| DeepSeek R1 | 164K | $0.28/M | $0.40/M | Reasoning tasks |
-| Z.AI GLM-4.7 | 203K | $0.52/M | $1.95/M | Chinese language |
-| KwaiKAT Coder Pro | 256K | $0.30/M | $1.20/M | Large codebases |
-| Moonshot V1 128K | 262K | $0.60/M | $2.50/M | Long documents |
-| Zhipu GLM-4 5B Plus | 203K | $0.44/M | $1.74/M | Cost efficiency |
-| Qwen 2.5 Coder 32B | 262K | $0.69/M | $2.70/M | Code specialization |
+| MiniMax M2.1 | 197K | $0.30/M | $1.20/M | General tasks, excellent value |
+| DeepSeek R1 | 131K | $0.50/M | $2.60/M | Advanced reasoning |
+| Claude 3.5 Sonnet | 200K | $3.00/M | $15.00/M | Nuanced understanding & analysis |
+| GPT-4o | 116K | $1.75/M | $7.00/M | Multimodal capabilities |
 
-If you're looking for the lowest cost, go with DeepSeek R1. For the best balance of speed and quality, MiniMax M2.1 is a great choice."
+If you're looking for the lowest cost, go with MiniMax M2.1. For advanced reasoning tasks, DeepSeek R1 is excellent. For nuanced analysis and long-context work, Claude 3.5 Sonnet shines."
 
 ---
 
@@ -669,7 +663,7 @@ Template Deployment
 
 ---
 
-**Version:** 1.2
+**Version:** 1.4
 **Created:** 2026-02-10
 **Updated:** 2026-02-16
 **Based on:** learning-openclaw-tutorial.md (v1.0)
