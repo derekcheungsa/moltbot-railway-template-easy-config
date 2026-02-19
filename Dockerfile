@@ -81,14 +81,14 @@ RUN pnpm install --prod --frozen-lockfile && pnpm store prune
 RUN curl -LsSf https://astral.sh/uv/install.sh | sh
 ENV PATH="/root/.local/bin:${PATH}"
 
-# Install nano-pdf CLI for PDF editing skill
-RUN uv pip install nano-pdf
+# Install nano-pdf CLI for PDF editing skill (use --system to install globally)
+RUN uv pip install --system nano-pdf
 
 # Install Python PDF libraries for pdf skill
 RUN pip3 install pypdf pdfplumber reportlab pytesseract pdf2image && \
     apt-get update && \
     DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
-    poppler-utils tesseract-ocr && \
+    poppler-utils tesseract-ocr libtesseract-dev && \
     rm -rf /var/lib/apt/lists/*
 
 # Copy built openclaw
