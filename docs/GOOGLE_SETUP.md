@@ -119,15 +119,20 @@ REM Then remove headers/footers from the output file
 
 ---
 
-## Step 6: Add to Railway Environment Variables
+## Step 6: Update the Railway Environment Variable
+
+When you deploy from this Railway template, the `GOOGLE_CLIENT_SECRET_BASE64` variable is **automatically created** for you with a placeholder value. You only need to update it with your actual credentials.
 
 1. Go to your Railway project
 2. Click on your **OpenClaw service**
 3. Go to **Variables** tab
-4. Add a new variable:
-   - **Name:** `GOOGLE_CLIENT_SECRET_BASE64`
-   - **Value:** `<paste the base64 string from Step 5>`
-5. Click **Add Variable**
+4. Find the variable named `GOOGLE_CLIENT_SECRET_BASE64` (it's pre-created!)
+5. Edit the variable:
+   - Click the variable to edit it
+   - **Value:** Replace `"Replace_Me"` with the base64 string from Step 5
+6. Click **Save**
+
+**Note:** If you don't see the variable, click "New Variable" and add it manually, then contact us to check the template configuration.
 
 ---
 
