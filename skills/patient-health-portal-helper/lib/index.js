@@ -7,10 +7,10 @@
  * @module health-portal
  */
 
-const { ScraperFactory } = require('./scrapers');
-const { GoogleCalendarClient } = require('./google-calendar');
-const { encrypt, decrypt } = require('./utils/crypto');
-const { logger } = require('./utils/logger');
+import { ScraperFactory } from './scrapers/index.js';
+import { GoogleCalendarClient } from './google-calendar.js';
+import { encrypt, decrypt } from './utils/crypto.js';
+import { logger } from './utils/logger.js';
 
 /**
  * Main HealthPortalSync class for orchestrating the sync process
@@ -248,7 +248,7 @@ async function runManualSync(config) {
   }
 }
 
-module.exports = {
+export {
   HealthPortalSync,
   createSync,
   runManualSync,

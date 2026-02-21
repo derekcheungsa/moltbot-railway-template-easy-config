@@ -7,9 +7,9 @@
  * @module health-portal/scrapers
  */
 
-const { ShinePartnersScraper } = require('./shinepartners');
-const { MockPortalScraper } = require('./mockportal');
-const { logger } = require('../utils/logger');
+import { ShinePartnersScraper } from './shinepartners.js';
+import { MockPortalScraper } from './mockportal.js';
+import { logger } from '../utils/logger.js';
 
 /**
  * Available scraper types
@@ -140,7 +140,7 @@ class ScraperFactory {
   }
 }
 
-module.exports = {
+export {
   ScraperFactory,
   SCRAPER_TYPES,
 };

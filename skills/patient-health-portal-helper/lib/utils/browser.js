@@ -7,8 +7,8 @@
  * @module health-portal/utils/browser
  */
 
-const puppeteer = require('puppeteer');
-const { logger } = require('./logger');
+import puppeteer from 'puppeteer';
+import { logger } from './logger.js';
 
 /**
  * Browser configuration
@@ -212,7 +212,7 @@ async function takeScreenshot(page, filename) {
   }
 }
 
-module.exports = {
+export {
   createBrowser,
   createPage,
   navigateWithRetry,

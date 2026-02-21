@@ -7,7 +7,7 @@
  * @module health-portal/utils/crypto
  */
 
-const crypto = require('crypto');
+import crypto from 'crypto';
 
 /**
  * Encryption key derivation settings
@@ -183,7 +183,7 @@ function decodeCredentials(encoded) {
   };
 }
 
-module.exports = {
+export {
   encrypt,
   decrypt,
   hash,

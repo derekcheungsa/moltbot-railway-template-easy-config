@@ -7,9 +7,9 @@
  * @module health-portal/scrapers/shinepartners
  */
 
-const { BaseScraper } = require('./base');
-const { parseAppointmentDate, parseAppointmentTime } = require('../parsers/appointment-parser');
-const { logger } = require('../utils/logger');
+import { BaseScraper } from './base.js';
+import { parseAppointmentDate, parseAppointmentTime } from '../parsers/appointment-parser.js';
+import { logger } from '../utils/logger.js';
 
 class ShinePartnersScraper extends BaseScraper {
   constructor(config) {
@@ -332,4 +332,4 @@ class ShinePartnersScraper extends BaseScraper {
   }
 }
 
-module.exports = { ShinePartnersScraper };
+export { ShinePartnersScraper };

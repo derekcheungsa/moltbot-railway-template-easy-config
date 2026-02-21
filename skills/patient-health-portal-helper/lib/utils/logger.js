@@ -96,4 +96,4 @@ class Logger {
 // Create singleton logger instance
 const logger = new Logger('[health-portal]');
 
-module.exports = { logger, Logger, LOG_LEVELS };
+export { logger, Logger, LOG_LEVELS };

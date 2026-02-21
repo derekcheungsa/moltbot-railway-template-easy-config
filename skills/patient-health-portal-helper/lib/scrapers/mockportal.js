@@ -7,9 +7,9 @@
  * @module health-portal/scrapers/mockportal
  */
 
-const { BaseScraper } = require('./base');
-const { parseAppointmentDate, parseAppointmentTime } = require('../parsers/appointment-parser');
-const { logger } = require('../utils/logger');
+import { BaseScraper } from './base.js';
+import { parseAppointmentDate, parseAppointmentTime } from '../parsers/appointment-parser.js';
+import { logger } from '../utils/logger.js';
 
 class MockPortalScraper extends BaseScraper {
   constructor(config) {
@@ -44,8 +44,11 @@ class MockPortalScraper extends BaseScraper {
     // Submit form
     await this.page.click('button[type="submit"]');
 
-    // Wait for navigation
-    await this.page.waitForNavigation({ waitUntil: 'networkidle2' });
+    // Wait for URL to change to appointments page (mock portal uses JavaScript for navigation)
+    await this.page.waitForFunction(
+      () => window.location.pathname.includes('appointments.html') || document.title.includes('Appointments'),
+      { timeout: this.config.timeout }
+    );
 
     // Check for login errors
     const errorElement = await this.page.$('.error');
@@ -184,4 +187,4 @@ class MockPortalScraper extends BaseScraper {
   }
 }
 
-module.exports = { MockPortalScraper };
+export { MockPortalScraper };

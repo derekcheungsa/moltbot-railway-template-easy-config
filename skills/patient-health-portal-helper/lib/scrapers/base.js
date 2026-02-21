@@ -7,8 +7,8 @@
  * @module health-portal/scrapers/base
  */
 
-const { createBrowser } = require('../utils/browser');
-const { logger } = require('../utils/logger');
+import { createBrowser } from '../utils/browser.js';
+import { logger } from '../utils/logger.js';
 
 class BaseScraper {
   constructor(config) {
@@ -128,4 +128,4 @@ class BaseScraper {
   }
 }
 
-module.exports = { BaseScraper };
+export { BaseScraper };

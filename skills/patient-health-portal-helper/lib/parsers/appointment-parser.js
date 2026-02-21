@@ -7,7 +7,7 @@
  * @module health-portal/parsers/appointment-parser
  */
 
-const { logger } = require('../utils/logger');
+import { logger } from '../utils/logger.js';
 
 /**
  * Month name to number mapping
@@ -240,7 +240,7 @@ function formatDuration(minutes) {
   return `${hours}h ${remainingMinutes}m`;
 }
 
-module.exports = {
+export {
   parseAppointmentDate,
   parseAppointmentTime,
   combineDateTime,
