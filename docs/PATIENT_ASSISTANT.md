@@ -625,11 +625,24 @@ curl -X POST http://your-app.up.railway.app/api/sync-portal \
 **Option 3: Railway Console**
 ```bash
 # Access Railway service console (Shell tab)
-curl -X POST http://localhost:8080/api/sync-portal
+cd /data/.openclaw/skills/patient-health-portal-helper/lib
 
-# Or run the sync function directly
-node -e "require('./src/health-portal-sync.js').syncNow()"
+# Run the sync function directly
+node -e "
+import { runManualSync } from './index.js';
+const config = {
+  portal_url: process.env.HEALTH_PORTAL_URL,
+  portal_type: process.env.HEALTH_PORTAL_TYPE,
+  username: process.env.HEALTH_PORTAL_USERNAME,
+  password: process.env.HEALTH_PORTAL_PASSWORD,
+  family_attendees: (process.env.HEALTH_PORTAL_FAMILY_ATTENDEES || '').split(','),
+  enabled: true
+};
+runManualSync(config).then(console.log).catch(console.error);
+"
 ```
+
+**Note:** See [Patient Portal Testing Guide](PATIENT_PORTAL_TESTING_GUIDE.md) for detailed testing instructions.
 
 #### Sync Function Implementation
 
@@ -840,6 +853,16 @@ To trigger manual sync:
 | **Allscripts** | Username/Password | 🔧 Planned |
 | **eClinicalWorks** | Username/Password | ⚠️ Requires testing |
 | **Custom portals** | OAuth 2.0 | 🔧 Extensible framework |
+
+#### Testing
+
+For testing the portal scraper with your credentials, see:
+- **[Patient Portal Testing Guide](PATIENT_PORTAL_TESTING_GUIDE.md)** - Comprehensive testing instructions
+  - Mock portal testing (safe, testuser/testpass123)
+  - Real portal testing with your credentials
+  - Environment variables setup
+  - Troubleshooting guide
+- **[Patient Health Portal Helper Skill](../skills/patient-health-portal-helper/SKILL.md)** - Main skill documentation
 
 ---
 
@@ -1315,7 +1338,8 @@ Total today: 2/2 medicines taken \U0001f4aa"
 11. \ud83d\udd27 **Add MyChart scraper** - Requires authentication module
 12. \ud83d\udd27 **Add Cerner scraper** - Requires API access
 13. \ud83d\udd27 **Add AthenaHealth scraper** - Requires authentication module
-14. \ud83d\udd27 **Test with production portal** - Validate sync flow end-to-end
+14. \u2705 **Test with production portal** - Comprehensive testing guide available (see PORTAL_TESTING_GUIDE.md)
+15. \u2705 **Create testing infrastructure** - Mock portal + real portal test scripts
 
 ---
 
