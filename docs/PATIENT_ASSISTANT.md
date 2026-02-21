@@ -41,6 +41,173 @@ OpenClaw serves as a proactive personal assistant for patients, helping them:
 \u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518
 ```
 
+### Detailed Architecture (Mermaid)
+
+```mermaid
+graph TB
+    subgraph "User Layer"
+        P[Patient]
+        F[Family Members]
+        C[Caregivers]
+    end
+
+    subgraph "Communication Channels"
+        TG["Telegram Bot (Primary)"]
+        GM["Gmail (Secondary)"]
+        VC["Voice Commands (Future)"]
+    end
+
+    subgraph "Railway Cloud Platform"
+        subgraph "OpenClaw Gateway"
+            OC[OpenClaw Core]
+            SE[Scheduler Engine]
+            RE[Reminder Engine]
+            CE[Coordination Engine]
+        end
+
+        subgraph "Skills Layer"
+            GOG["gog Skill - Google Workspace"]
+            SUM[summarize Skill]
+            WTH[weather Skill]
+            PDF[pdf Skill]
+        end
+
+        subgraph "Data Persistence"
+            VOL["Railway Volume - /data"]
+            CRE["Credentials - base64 encoded"]
+            ST[OpenClaw State]
+            WS[Workspace Files]
+        end
+    end
+
+    subgraph "Google Workspace API"
+        CAL["Google Calendar - Appointments and Medicine"]
+        DRV["Google Drive - Medical Documents"]
+        SH["Google Sheets - Logs and Reports"]
+        GML["Gmail - Invites and Reminders"]
+    end
+
+    P & F & C -->|Voice/Text| TG
+    TG -->|Webhook| OC
+    GM <-->|SMTP/IMAP| OC
+    VC -->|STT/TTS| OC
+
+    OC --> SE
+    OC --> RE
+    OC --> CE
+
+    OC --> GOG
+    GOG --> CAL
+    GOG --> DRV
+    GOG --> SH
+    GOG --> GML
+
+    OC <--> VOL
+    CRE -.->|Base64 Decode| ST
+    ST -.->|OAuth Token| GOG
+
+    SE -.->|Create Events| CAL
+    RE -.->|Recurring Events| CAL
+    CE -.->|Upload Docs| DRV
+    CE -.->|Append Rows| SH
+    CAL -.->|Send Invites| GML
+
+    style TG fill:#0088cc,stroke:#006699,color:#fff
+    style OC fill:#7c3aed,stroke:#5b21b6,color:#fff
+    style GOG fill:#4285f4,stroke:#3367d6,color:#fff
+    style CAL fill:#34a853,stroke:#2d9247,color:#fff
+    style DRV fill:#fbbc05,stroke:#f9ab00,color:#000
+    style SH fill:#34a853,stroke:#2d9247,color:#fff
+    style GML fill:#ea4335,stroke:#d33426,color:#fff
+    style VOL fill:#f59e0b,stroke:#d97706,color:#fff
+```
+
+### Data Flow Diagram
+
+```mermaid
+sequenceDiagram
+    participant P as Patient
+    participant TG as Telegram Bot
+    participant OC as OpenClaw
+    participant G as Google APIs
+    participant F as Family Members
+
+    Note over P,F: Appointment Scheduling Flow
+
+    P->>TG: "Schedule Dr. Smith on March 5th at 2pm"
+    TG->>OC: Webhook with user message
+    OC->>OC: Parse intent & extract details
+    OC->>G: POST /calendars/primary/events
+    G-->>OC: Event created with ID
+    OC->>G: POST /drive/v3/files (create doc)
+    G-->>OC: Document ID
+    OC->>G: POST /sheets/values:append (log)
+    G-->>OC: Row appended
+    OC->>G: Send calendar invites to family
+    G-->>F: Email invitations
+    OC-->>TG: Success response with details
+    TG-->>P: ✅ Created: Doctor Appointment
+
+    Note over P,F: Medicine Reminder Flow
+
+    loop Daily at 8am/8pm
+        OC->>G: Check recurring events
+        G-->>OC: Medicine reminder due
+        OC->>G: Send email (30 min before)
+        OC->>TG: "Did you take your medicine?"
+        P->>TG: "yes"
+        TG->>OC: User response
+        OC->>G: Append to Sheets log
+        OC-->>TG: ✅ Logged as taken
+    end
+```
+
+### Railway Deployment Architecture
+
+```mermaid
+graph LR
+    subgraph "Railway Platform"
+        subgraph "Container"
+            GW["Express Wrapper - Port 8080"]
+            OG["OpenClaw Gateway - Port 18789"]
+            SK["Skills Directory - /data/.openclaw/skills"]
+            CR["Credentials - /data/.openclaw/credentials"]
+        end
+
+        subgraph "Persistent Volume"
+            VOL["Data Volume - /data"]
+            CFG["openclaw.json - Config"]
+            SES["Sessions - State"]
+            WRK["Workspace - Files"]
+        end
+
+        subgraph "Environment Variables"
+            EV1[SETUP_PASSWORD]
+            EV2[GOOGLE_CLIENT_SECRET_BASE64]
+            EV3[OPENCLAW_GATEWAY_TOKEN]
+        end
+
+        subgraph "Networking"
+            PUB["Public URL - .up.railway.app"]
+            HCK["Health Check - /setup/healthz"]
+        end
+    end
+
+    PUB -->|HTTP/WS| GW
+    GW -->|Proxy| OG
+    GW -->|Auth| HCK
+    EV2 -->|Decode at startup| CR
+    SK -->|Load| OG
+    VOL -->|Mount| Container
+    CFG <-->|Read/Write| OG
+
+    style PUB fill:#0f172a,stroke:#1e293b,color:#fff
+    style GW fill:#7c3aed,stroke:#5b21b6,color:#fff
+    style OG fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style VOL fill:#f59e0b,stroke:#d97706,color:#fff
+    style EV2 fill:#ef4444,stroke:#dc2626,color:#fff
+```
+
 ## Communication Channels
 
 ### Primary: Telegram
