@@ -60,6 +60,33 @@ npm install
 node skills/patient-health-portal-helper/lib/index.js
 ```
 
+## Testing
+
+### Using the Mock Portal
+
+A **mock patient portal** is included for testing without accessing real patient data:
+
+```bash
+# Start the mock portal server
+cd skills/patient-health-portal-helper/test-mock-portal
+node server.js
+
+# In another terminal, run the test
+cd skills/patient-health-portal-helper
+MOCK_PORTAL_URL=http://localhost:8080 node test.js
+```
+
+**Test Credentials:**
+- Username: `testuser`
+- Password: `testpass123`
+
+**Expected Results:**
+- Extracts 6 sample appointments
+- Creates Google Calendar events
+- Invites family members
+
+See [test-mock-portal/README.md](test-mock-portal/README.md) for detailed testing instructions.
+
 ## Usage
 
 ### Telegram Commands

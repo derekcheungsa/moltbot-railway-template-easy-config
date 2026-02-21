@@ -8,6 +8,7 @@
  */
 
 const { ShinePartnersScraper } = require('./shinepartners');
+const { MockPortalScraper } = require('./mockportal');
 const { logger } = require('../utils/logger');
 
 /**
@@ -15,6 +16,7 @@ const { logger } = require('../utils/logger');
  */
 const SCRAPER_TYPES = {
   SHINEPARTNERS: 'ShinePartners',
+  MOCKPORTAL: 'MockPortal',
   MYCHART: 'MyChart',
   CERNER: 'Cerner',
   ATHENAHEALTH: 'AthenaHealth',
@@ -26,6 +28,7 @@ const SCRAPER_TYPES = {
  */
 const SCRAPERS = {
   [SCRAPER_TYPES.SHINEPARTNERS]: ShinePartnersScraper,
+  [SCRAPER_TYPES.MOCKPORTAL]: MockPortalScraper,
   // Additional scrapers can be registered here
   // [SCRAPER_TYPES.MYCHART]: MyChartScraper,
   // [SCRAPER_TYPES.CERNER]: CernerScraper,
@@ -78,6 +81,14 @@ class ScraperFactory {
    */
   static detectFromUrl(url) {
     const lowerUrl = url.toLowerCase();
+
+    // Mock portal detection (for testing)
+    if (lowerUrl.includes('localhost') ||
+        lowerUrl.includes('127.0.0.1') ||
+        lowerUrl.includes('mock') ||
+        lowerUrl.includes('test-mock-portal')) {
+      return SCRAPER_TYPES.MOCKPORTAL;
+    }
 
     // Shine Partners detection
     if (lowerUrl.includes('shinepartners.ca')) {
