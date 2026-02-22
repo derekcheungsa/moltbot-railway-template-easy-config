@@ -148,37 +148,6 @@ async function startGateway() {
 
   console.log(`[gateway] ========== TOKEN SYNC COMPLETE ==========`);
 
-  // Set gateway.trustedProxies and related WebSocket auth settings in openclaw.json
-  // Using array format (required by OpenClaw) with Railway's proxy ranges
-  console.log(`[gateway] Setting gateway.trustedProxies in openclaw.json...`);
-  try {
-    const configPath = path.join(STATE_DIR, "openclaw.json");
-    const config = JSON.parse(fs.readFileSync(configPath, "utf8"));
-
-    // Ensure gateway object exists
-    if (!config.gateway) config.gateway = {};
-    if (!config.gateway.ws) config.gateway.ws = {};
-
-    // Set trustedProxies to trust Railway's proxy (as array)
-    // Railway uses CGNAT range 100.64.0.0/10 plus standard proxy ranges
-    config.gateway.trustedProxies = [
-      "100.64.0.0/10",  // Railway CGNAT range
-      "10.0.0.0/8",     // Private network
-      "172.16.0.0/12",  // Private network
-      "192.168.0.0/16", // Private network
-      "127.0.0.1",      // Localhost
-    ];
-
-    // Set WebSocket auth mode to allow insecure connections (bypass pairing)
-    config.gateway.ws.authMode = "insecure";
-
-    // Write back the updated config
-    fs.writeFileSync(configPath, JSON.stringify(config, null, 2));
-    console.log(`[gateway] ✓ Set gateway.trustedProxies array and ws.authMode in openclaw.json`);
-  } catch (err) {
-    console.error(`[gateway] Failed to set trustedProxies: ${err.message}`);
-  }
-
   const args = [
     "gateway",
     "run",
@@ -192,23 +161,12 @@ async function startGateway() {
     OPENCLAW_GATEWAY_TOKEN,
   ];
 
-  // Set gateway host environment variable for Railway
-  const gatewayHost = process.env.GATEWAY_HOST || process.env.RAILWAY_PUBLIC_DOMAIN;
-  if (gatewayHost) {
-    console.log(`[gateway] Setting GATEWAY_HOST environment variable to: ${gatewayHost}`);
-  }
-
   // Read the .env file to get the API key for the gateway process
   let gatewayEnv = {
     ...process.env,
     OPENCLAW_STATE_DIR: STATE_DIR,
     OPENCLAW_WORKSPACE_DIR: WORKSPACE_DIR,
   };
-
-  // Set GATEWAY_HOST environment variable for Railway if available
-  if (gatewayHost) {
-    gatewayEnv.GATEWAY_HOST = gatewayHost;
-  }
 
   try {
     const envPath = path.join(STATE_DIR, ".env");
@@ -793,39 +751,6 @@ app.post("/setup/api/run", requireSetupAuth, async (req, res) => {
         OPENCLAW_NODE,
         clawArgs(["config", "set", "gateway.controlUi.allowInsecureAuth", "true"]),
       );
-
-      // Set gateway.trustedProxies and WebSocket auth settings in openclaw.json
-      // Using array format (required by OpenClaw) with Railway's proxy ranges
-      console.log(`[onboard] Setting gateway.trustedProxies and ws.authMode in openclaw.json...`);
-      try {
-        const configPath = path.join(STATE_DIR, "openclaw.json");
-        const config = JSON.parse(fs.readFileSync(configPath, "utf8"));
-
-        // Ensure gateway object exists
-        if (!config.gateway) config.gateway = {};
-        if (!config.gateway.ws) config.gateway.ws = {};
-
-        // Set trustedProxies to trust Railway's proxy (as array)
-        // Railway uses CGNAT range 100.64.0.0/10 plus standard proxy ranges
-        config.gateway.trustedProxies = [
-          "100.64.0.0/10",  // Railway CGNAT range
-          "10.0.0.0/8",     // Private network
-          "172.16.0.0/12",  // Private network
-          "192.168.0.0/16", // Private network
-          "127.0.0.1",      // Localhost
-        ];
-
-        // Set WebSocket auth mode to allow insecure connections (bypass pairing)
-        config.gateway.ws.authMode = "insecure";
-
-        // Write back the updated config
-        fs.writeFileSync(configPath, JSON.stringify(config, null, 2));
-        console.log(`[onboard] ✓ Set gateway.trustedProxies array and ws.authMode in openclaw.json`);
-        extra += `\n[onboard] ✓ Set gateway.trustedProxies and ws.authMode for Railway\n`;
-      } catch (err) {
-        console.error(`[onboard] Failed to set trustedProxies: ${err.message}`);
-        extra += `\n[WARNING] Failed to set trustedProxies: ${err.message}\n`;
-      }
 
       const channelsHelp = await runCmd(
         OPENCLAW_NODE,
