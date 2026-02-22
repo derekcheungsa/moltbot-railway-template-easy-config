@@ -148,6 +148,35 @@ async function startGateway() {
 
   console.log(`[gateway] ========== TOKEN SYNC COMPLETE ==========`);
 
+  // Ensure trusted proxies is configured for Railway
+  console.log(`[gateway] Configuring trustedProxies for Railway...`);
+  const trustedProxiesResult = await runCmd(
+    OPENCLAW_NODE,
+    clawArgs(["config", "set", "gateway.trustedProxies", "linklocal"]),
+  );
+  if (trustedProxiesResult.code !== 0) {
+    console.warn(`[gateway] Warning: Failed to set trustedProxies (exit ${trustedProxiesResult.code})`);
+  } else {
+    console.log(`[gateway] ✓ trustedProxies set to linklocal`);
+  }
+
+  // Set gateway host to Railway public URL if available
+  const gatewayHost = process.env.GATEWAY_HOST || process.env.RAILWAY_PUBLIC_DOMAIN;
+  if (gatewayHost) {
+    console.log(`[gateway] Setting gateway.host to: ${gatewayHost}`);
+    const hostResult = await runCmd(
+      OPENCLAW_NODE,
+      clawArgs(["config", "set", "gateway.host", gatewayHost]),
+    );
+    if (hostResult.code !== 0) {
+      console.warn(`[gateway] Warning: Failed to set gateway.host (exit ${hostResult.code})`);
+    } else {
+      console.log(`[gateway] ✓ gateway.host set to ${gatewayHost}`);
+    }
+  } else {
+    console.log(`[gateway] GATEWAY_HOST not set, skipping gateway.host configuration`);
+  }
+
   const args = [
     "gateway",
     "run",
@@ -751,6 +780,19 @@ app.post("/setup/api/run", requireSetupAuth, async (req, res) => {
         OPENCLAW_NODE,
         clawArgs(["config", "set", "gateway.controlUi.allowInsecureAuth", "true"]),
       );
+      // Trust Railway's proxy headers so connections are treated as local
+      await runCmd(
+        OPENCLAW_NODE,
+        clawArgs(["config", "set", "gateway.trustedProxies", "linklocal"]),
+      );
+      // Set gateway host to Railway public URL if available
+      const gatewayHost = process.env.GATEWAY_HOST || process.env.RAILWAY_PUBLIC_DOMAIN;
+      if (gatewayHost) {
+        await runCmd(
+          OPENCLAW_NODE,
+          clawArgs(["config", "set", "gateway.host", gatewayHost]),
+        );
+      }
 
       const channelsHelp = await runCmd(
         OPENCLAW_NODE,
