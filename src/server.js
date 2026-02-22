@@ -1040,11 +1040,19 @@ proxy.on("error", (err, _req, _res) => {
 // Inject auth token into HTTP proxy requests
 proxy.on("proxyReq", (proxyReq, req, res) => {
   proxyReq.setHeader("Authorization", `Bearer ${OPENCLAW_GATEWAY_TOKEN}`);
+  // Remove Railway's proxy headers to prevent "untrusted proxy" errors
+  proxyReq.removeHeader("X-Forwarded-For");
+  proxyReq.removeHeader("X-Forwarded-Host");
+  proxyReq.removeHeader("X-Forwarded-Proto");
 });
 
 // Inject auth token into WebSocket upgrade requests
 proxy.on("proxyReqWs", (proxyReq, req, socket, options, head) => {
   proxyReq.setHeader("Authorization", `Bearer ${OPENCLAW_GATEWAY_TOKEN}`);
+  // Remove Railway's proxy headers to prevent "untrusted proxy" errors
+  proxyReq.removeHeader("X-Forwarded-For");
+  proxyReq.removeHeader("X-Forwarded-Host");
+  proxyReq.removeHeader("X-Forwarded-Proto");
 });
 
 app.use(async (req, res) => {
