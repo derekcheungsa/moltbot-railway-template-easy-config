@@ -1068,6 +1068,13 @@ function stripProxyHeaders(req, res, next) {
   // OpenClaw treats loopback connections with non-local Host headers as remote
   // This causes "pairing required" errors even when allowInsecureAuth is true
   req.headers["host"] = `localhost:${INTERNAL_GATEWAY_PORT}`;
+
+  // Override Origin header to appear local for WebSocket connections
+  // OpenClaw validates the Origin header and rejects non-local origins
+  // This causes "origin not allowed" errors
+  if (req.headers["origin"]) {
+    req.headers["origin"] = `http://localhost:${INTERNAL_GATEWAY_PORT}`;
+  }
   next();
 }
 
@@ -1113,7 +1120,7 @@ server.on("upgrade", async (req, socket, head) => {
   }
 
   // Strip Railway proxy headers from WebSocket upgrade requests
-  // This prevents "pairing required" errors in the gateway
+  // This prevents "pairing required" and "origin not allowed" errors
   delete req.headers["x-forwarded-for"];
   delete req.headers["x-forwarded-host"];
   delete req.headers["x-forwarded-proto"];
@@ -1130,6 +1137,12 @@ server.on("upgrade", async (req, socket, head) => {
   // Override Host header to appear local
   // OpenClaw treats loopback connections with non-local Host headers as remote
   req.headers["host"] = `localhost:${INTERNAL_GATEWAY_PORT}`;
+
+  // Override Origin header to appear local
+  // OpenClaw validates the Origin header and rejects non-local origins
+  if (req.headers["origin"]) {
+    req.headers["origin"] = `http://localhost:${INTERNAL_GATEWAY_PORT}`;
+  }
 
   // Proxy WebSocket upgrade (auth token injected via proxyReqWs event)
   proxy.ws(req, socket, head, { target: GATEWAY_TARGET });
