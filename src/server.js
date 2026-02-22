@@ -1063,6 +1063,11 @@ function stripProxyHeaders(req, res, next) {
   delete req.headers["cf-connecting-ip"]; // Cloudflare
   delete req.headers["cf-ray"];
   delete req.headers["cf-ipcountry"];
+
+  // Override Host header to appear local
+  // OpenClaw treats loopback connections with non-local Host headers as remote
+  // This causes "pairing required" errors even when allowInsecureAuth is true
+  req.headers["host"] = `localhost:${INTERNAL_GATEWAY_PORT}`;
   next();
 }
 
@@ -1121,6 +1126,10 @@ server.on("upgrade", async (req, socket, head) => {
   delete req.headers["cf-connecting-ip"];
   delete req.headers["cf-ray"];
   delete req.headers["cf-ipcountry"];
+
+  // Override Host header to appear local
+  // OpenClaw treats loopback connections with non-local Host headers as remote
+  req.headers["host"] = `localhost:${INTERNAL_GATEWAY_PORT}`;
 
   // Proxy WebSocket upgrade (auth token injected via proxyReqWs event)
   proxy.ws(req, socket, head, { target: GATEWAY_TARGET });
