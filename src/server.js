@@ -221,6 +221,21 @@ async function startGateway() {
 
   console.log(`[gateway] ========== TOKEN SYNC COMPLETE ==========`);
 
+  // Ensure trustedProxies is configured to trust the wrapper (127.0.0.1)
+  // This prevents "Proxy headers detected from untrusted address" errors
+  const trustedProxies = ["127.0.0.1", "::1"];
+  await runCmd(
+    OPENCLAW_NODE,
+    clawArgs([
+      "config",
+      "set",
+      "--json",
+      "gateway.trustedProxies",
+      JSON.stringify(trustedProxies),
+    ]),
+  );
+  console.log(`[gateway] ✓ Configured trustedProxies: ${trustedProxies.join(", ")}`);
+
   const args = [
     "gateway",
     "run",
@@ -845,6 +860,23 @@ app.post("/setup/api/run", requireSetupAuth, async (req, res) => {
           "--json",
           "gateway.controlUi.allowedOrigins",
           JSON.stringify(allowedOrigins),
+        ]),
+      );
+
+      // Configure trustedProxies to trust the wrapper (127.0.0.1)
+      // This allows the wrapper to forward requests with proxy headers
+      // without triggering "untrusted proxy" errors
+      const trustedProxies = ["127.0.0.1", "::1"];
+      console.log(`[onboard] Configuring trustedProxies: ${trustedProxies.join(", ")}`);
+
+      await runCmd(
+        OPENCLAW_NODE,
+        clawArgs([
+          "config",
+          "set",
+          "--json",
+          "gateway.trustedProxies",
+          JSON.stringify(trustedProxies),
         ]),
       );
 
