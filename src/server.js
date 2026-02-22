@@ -1175,13 +1175,16 @@ proxy.on("proxyReqWs", (proxyReq, req, socket, options, head) => {
   proxyReq.setHeader("Authorization", `Bearer ${OPENCLAW_GATEWAY_TOKEN}`);
 });
 
-// Strip Railway's proxy headers before requests reach the gateway
+// Normalize Railway's proxy headers before requests reach the gateway
 // Railway adds X-Forwarded-* headers that contain the real client IP
-// Even with trustedProxies=["127.0.0.1"], OpenClaw validates IPs in X-Forwarded-For
-// By stripping these headers, the gateway sees only the wrapper (127.0.0.1) as the client
-function stripRailwayProxyHeaders(req, res, next) {
-  // Remove proxy headers that Railway's edge network adds
-  delete req.headers["x-forwarded-for"];
+// OpenClaw needs X-Forwarded-For to recognize trusted proxy connections
+// We replace it with 127.0.0.1 (the wrapper) which is in trustedProxies
+function normalizeProxyHeaders(req, res, next) {
+  // Replace X-Forwarded-For with the wrapper's IP (127.0.0.1)
+  // This allows the gateway to recognize it as a trusted proxy connection
+  req.headers["x-forwarded-for"] = "127.0.0.1";
+
+  // Remove other proxy headers that we don't need
   delete req.headers["x-forwarded-host"];
   delete req.headers["x-forwarded-proto"];
   delete req.headers["x-real-ip"];
@@ -1201,8 +1204,8 @@ app.use(async (req, res, next) => {
   next();
 });
 
-// Apply proxy header stripping before handling requests
-app.use(stripRailwayProxyHeaders, async (req, res) => {
+// Apply proxy header normalization before handling requests
+app.use(normalizeProxyHeaders, async (req, res) => {
   // If not configured, force users to /setup for any non-setup routes.
   if (!isConfigured() && !req.path.startsWith("/setup")) {
     return res.redirect("/setup");
@@ -1246,8 +1249,8 @@ server.on("upgrade", async (req, socket, head) => {
   // Auto-detect PUBLIC_URL from WebSocket upgrade requests
   detectPublicUrl(req);
 
-  // Strip Railway proxy headers from WebSocket upgrade requests
-  stripRailwayProxyHeaders(req, null, () => {});
+  // Normalize proxy headers for WebSocket upgrade requests
+  normalizeProxyHeaders(req, null, () => {});
 
   // Proxy WebSocket upgrade (auth token injected via proxyReqWs event)
   proxy.ws(req, socket, head, { target: GATEWAY_TARGET });
