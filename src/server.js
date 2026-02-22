@@ -148,7 +148,7 @@ async function startGateway() {
 
   console.log(`[gateway] ========== TOKEN SYNC COMPLETE ==========`);
 
-  // Set gateway.trustedProxies in openclaw.json directly
+  // Set gateway.trustedProxies and related WebSocket auth settings in openclaw.json
   // Using array format (required by OpenClaw) with Railway's proxy ranges
   console.log(`[gateway] Setting gateway.trustedProxies in openclaw.json...`);
   try {
@@ -157,6 +157,7 @@ async function startGateway() {
 
     // Ensure gateway object exists
     if (!config.gateway) config.gateway = {};
+    if (!config.gateway.ws) config.gateway.ws = {};
 
     // Set trustedProxies to trust Railway's proxy (as array)
     // Railway uses CGNAT range 100.64.0.0/10 plus standard proxy ranges
@@ -168,9 +169,12 @@ async function startGateway() {
       "127.0.0.1",      // Localhost
     ];
 
+    // Set WebSocket auth mode to allow insecure connections (bypass pairing)
+    config.gateway.ws.authMode = "insecure";
+
     // Write back the updated config
     fs.writeFileSync(configPath, JSON.stringify(config, null, 2));
-    console.log(`[gateway] ✓ Set gateway.trustedProxies array in openclaw.json`);
+    console.log(`[gateway] ✓ Set gateway.trustedProxies array and ws.authMode in openclaw.json`);
   } catch (err) {
     console.error(`[gateway] Failed to set trustedProxies: ${err.message}`);
   }
@@ -790,15 +794,16 @@ app.post("/setup/api/run", requireSetupAuth, async (req, res) => {
         clawArgs(["config", "set", "gateway.controlUi.allowInsecureAuth", "true"]),
       );
 
-      // Set gateway.trustedProxies in openclaw.json directly for Railway
+      // Set gateway.trustedProxies and WebSocket auth settings in openclaw.json
       // Using array format (required by OpenClaw) with Railway's proxy ranges
-      console.log(`[onboard] Setting gateway.trustedProxies in openclaw.json...`);
+      console.log(`[onboard] Setting gateway.trustedProxies and ws.authMode in openclaw.json...`);
       try {
         const configPath = path.join(STATE_DIR, "openclaw.json");
         const config = JSON.parse(fs.readFileSync(configPath, "utf8"));
 
         // Ensure gateway object exists
         if (!config.gateway) config.gateway = {};
+        if (!config.gateway.ws) config.gateway.ws = {};
 
         // Set trustedProxies to trust Railway's proxy (as array)
         // Railway uses CGNAT range 100.64.0.0/10 plus standard proxy ranges
@@ -810,10 +815,13 @@ app.post("/setup/api/run", requireSetupAuth, async (req, res) => {
           "127.0.0.1",      // Localhost
         ];
 
+        // Set WebSocket auth mode to allow insecure connections (bypass pairing)
+        config.gateway.ws.authMode = "insecure";
+
         // Write back the updated config
         fs.writeFileSync(configPath, JSON.stringify(config, null, 2));
-        console.log(`[onboard] ✓ Set gateway.trustedProxies array in openclaw.json`);
-        extra += `\n[onboard] ✓ Set gateway.trustedProxies array for Railway proxy\n`;
+        console.log(`[onboard] ✓ Set gateway.trustedProxies array and ws.authMode in openclaw.json`);
+        extra += `\n[onboard] ✓ Set gateway.trustedProxies and ws.authMode for Railway\n`;
       } catch (err) {
         console.error(`[onboard] Failed to set trustedProxies: ${err.message}`);
         extra += `\n[WARNING] Failed to set trustedProxies: ${err.message}\n`;
