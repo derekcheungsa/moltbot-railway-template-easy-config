@@ -131,7 +131,7 @@ RUN printf '%s\n' '#!/usr/bin/env bash' 'exec node /openclaw/dist/entry.js "$@"'
 COPY src ./src
 
 # Copy ClawHub skills (with installed dependencies)
-COPY --from=0 /tmp/skills /data/.openclaw/skills
+RUN mkdir -p /data/.openclaw && cp -r /tmp/skills /data/.openclaw/skills && rm -rf /tmp/skills
 
 ENV PORT=8080
 EXPOSE 8080
