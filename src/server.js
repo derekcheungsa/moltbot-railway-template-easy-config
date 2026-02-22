@@ -42,10 +42,28 @@ const INTERNAL_GATEWAY_HOST = "127.0.0.1";
 const GATEWAY_TARGET = `http://${INTERNAL_GATEWAY_HOST}:${INTERNAL_GATEWAY_PORT}`;
 
 // Public URL for OpenClaw allowedOrigins configuration
-// Users can set PUBLIC_URL environment variable (e.g., https://my-app.up.railway.app)
-// If not set, we'll auto-detect from the first request's Host header
-let PUBLIC_URL = process.env.PUBLIC_URL?.trim()?.replace(/\/$/, ""); // Remove trailing slash
-console.log(`[wrapper] PUBLIC_URL: ${PUBLIC_URL || "(auto-detect from first request)"}`);
+// Priority: RAILWAY_PUBLIC_DOMAIN > PUBLIC_URL > auto-detect from first request
+function getPublicUrl() {
+  // Railway provides RAILWAY_PUBLIC_DOMAIN automatically (e.g., "example.up.railway.app")
+  const railwayDomain = process.env.RAILWAY_PUBLIC_DOMAIN?.trim();
+  if (railwayDomain) {
+    return `https://${railwayDomain.replace(/^https?:\/\//, "").replace(/\/$/, "")}`;
+  }
+
+  // User can explicitly set PUBLIC_URL for custom domains
+  const customUrl = process.env.PUBLIC_URL?.trim()?.replace(/\/$/, "");
+  if (customUrl) {
+    return customUrl;
+  }
+
+  return null; // Will auto-detect from first request
+}
+
+let PUBLIC_URL = getPublicUrl();
+console.log(`[wrapper] PUBLIC_URL: ${PUBLIC_URL || "(auto-detect from first request)"} ${
+  PUBLIC_URL && process.env.RAILWAY_PUBLIC_DOMAIN ? "(from RAILWAY_PUBLIC_DOMAIN)" :
+  PUBLIC_URL && process.env.PUBLIC_URL ? "(from PUBLIC_URL env var)" : ""
+}`);
 
 // Always run the built-from-source CLI entry directly to avoid PATH/global-install mismatches.
 const OPENCLAW_ENTRY = "/openclaw/dist/entry.js";

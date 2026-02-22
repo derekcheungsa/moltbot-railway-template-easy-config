@@ -30,13 +30,14 @@ Create a new template in Railway with these steps:
 
 1. **Create a new template** from this GitHub repo
 2. **Add a Volume** mounted at `/data`
-3. **Set environment variables**:
+3. **Set one environment variable**:
    - `SETUP_PASSWORD` — Your password to access the setup wizard and authenticate with the gateway
-   - `PUBLIC_URL` (optional) — Your Railway public URL (e.g., `https://your-app.up.railway.app`). If not set, the template will auto-detect it from the first request.
 4. **Enable Public Networking** (HTTP) — Railway will assign a domain like `https://your-app.up.railway.app`
 5. **Deploy**
 
-**Note**: Setting `PUBLIC_URL` explicitly is recommended for production deployments to ensure WebSocket connections work correctly from the first request.
+That's it! Railway automatically provides `RAILWAY_PUBLIC_DOMAIN` which the template uses to configure OpenClaw's allowedOrigins for WebSocket connections.
+
+**Note**: For custom domains, set `PUBLIC_URL` to your custom domain (e.g., `https://custom.example.com`).
 
 ## Getting started
 
@@ -116,7 +117,6 @@ docker build -t openclaw-railway-template .
 docker run --rm -p 8080:8080 \
   -e PORT=8080 \
   -e SETUP_PASSWORD=test \
-  -e PUBLIC_URL=http://localhost:8080 \
   -v $(pwd)/.tmpdata:/data \
   openclaw-railway-template
 
