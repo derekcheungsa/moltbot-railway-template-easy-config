@@ -1040,22 +1040,33 @@ proxy.on("error", (err, _req, _res) => {
 // Inject auth token into HTTP proxy requests
 proxy.on("proxyReq", (proxyReq, req, res) => {
   proxyReq.setHeader("Authorization", `Bearer ${OPENCLAW_GATEWAY_TOKEN}`);
-  // Remove Railway's proxy headers to prevent "untrusted proxy" errors
-  proxyReq.removeHeader("X-Forwarded-For");
-  proxyReq.removeHeader("X-Forwarded-Host");
-  proxyReq.removeHeader("X-Forwarded-Proto");
 });
 
 // Inject auth token into WebSocket upgrade requests
 proxy.on("proxyReqWs", (proxyReq, req, socket, options, head) => {
   proxyReq.setHeader("Authorization", `Bearer ${OPENCLAW_GATEWAY_TOKEN}`);
-  // Remove Railway's proxy headers to prevent "untrusted proxy" errors
-  proxyReq.removeHeader("X-Forwarded-For");
-  proxyReq.removeHeader("X-Forwarded-Host");
-  proxyReq.removeHeader("X-Forwarded-Proto");
 });
 
-app.use(async (req, res) => {
+// Middleware to strip Railway proxy headers BEFORE they reach the proxy
+// This prevents OpenClaw gateway from detecting "untrusted proxy" and requiring device pairing
+function stripProxyHeaders(req, res, next) {
+  // Remove all proxy-related headers that Railway might add
+  delete req.headers["x-forwarded-for"];
+  delete req.headers["x-forwarded-host"];
+  delete req.headers["x-forwarded-proto"];
+  delete req.headers["x-real-ip"];
+  delete req.headers["forwarded"];
+  delete req.headers["x-railway"]; // Railway-specific header
+  delete req.headers["x-railway-request-id"];
+  delete req.headers["x-vercel-id"]; // If proxied through Vercel
+  delete req.headers["x-vercel-ip-country"];
+  delete req.headers["cf-connecting-ip"]; // Cloudflare
+  delete req.headers["cf-ray"];
+  delete req.headers["cf-ipcountry"];
+  next();
+}
+
+app.use(stripProxyHeaders, async (req, res) => {
   // If not configured, force users to /setup for any non-setup routes.
   if (!isConfigured() && !req.path.startsWith("/setup")) {
     return res.redirect("/setup");
@@ -1095,6 +1106,22 @@ server.on("upgrade", async (req, socket, head) => {
     socket.destroy();
     return;
   }
+
+  // Strip Railway proxy headers from WebSocket upgrade requests
+  // This prevents "pairing required" errors in the gateway
+  delete req.headers["x-forwarded-for"];
+  delete req.headers["x-forwarded-host"];
+  delete req.headers["x-forwarded-proto"];
+  delete req.headers["x-real-ip"];
+  delete req.headers["forwarded"];
+  delete req.headers["x-railway"];
+  delete req.headers["x-railway-request-id"];
+  delete req.headers["x-vercel-id"];
+  delete req.headers["x-vercel-ip-country"];
+  delete req.headers["cf-connecting-ip"];
+  delete req.headers["cf-ray"];
+  delete req.headers["cf-ipcountry"];
+
   // Proxy WebSocket upgrade (auth token injected via proxyReqWs event)
   proxy.ws(req, socket, head, { target: GATEWAY_TARGET });
 });
