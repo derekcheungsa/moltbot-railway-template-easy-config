@@ -1,0 +1,17 @@
+{
+  "id": "patient-health-portal-helper",
+  "name": "Patient Health Portal Helper",
+  "description": "Automatically sync appointments from patient health portals to Google Calendar with family invitations.",
+  "version": "1.0.0",
+  "author": "OpenClaw Railway Template",
+  "license": "MIT",
+  "homepage": "https://github.com/openclaw/openclaw-railway-template",
+  "repository": "https://github.com/openclaw/openclaw-railway-template",
+  "tags": ["health", "medical", "calendar", "appointments", "portal", "sync"],
+  "capabilities": [
+    "web_scraping",
+    "google_calendar_integration",
+    "appointment_sync",
+    "family_notifications"
+  ]
+}

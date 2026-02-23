@@ -269,7 +269,7 @@
     state.formData.authChoice = els.authChoice ? els.authChoice.value : '';
     state.formData.authSecret = els.authSecret ? els.authSecret.value : '';
     state.formData.flow = els.flow ? els.flow.value : 'quickstart';
-    state.formData.atlasModel = els.atlasModel ? els.atlasModel.value : 'minimaxai/minimax-m2.1';
+    state.formData.atlasModel = els.atlasModel ? els.atlasModel.value : 'minimaxai/minimax-m2.5';
     state.formData.telegramToken = els.telegramToken ? els.telegramToken.value : '';
     state.formData.discordToken = els.discordToken ? els.discordToken.value : '';
     state.formData.slackBotToken = els.slackBotToken ? els.slackBotToken.value : '';

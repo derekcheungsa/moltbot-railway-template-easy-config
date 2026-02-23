@@ -1,0 +1,27 @@
+{
+  "name": "patient-health-portal-helper",
+  "version": "1.0.0",
+  "description": "Patient health portal sync skill for OpenClaw",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "test": "node test.js"
+  },
+  "dependencies": {
+    "puppeteer": "^23.11.1"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "keywords": [
+    "health",
+    "portal",
+    "sync",
+    "appointments",
+    "google-calendar",
+    "web-scraping"
+  ],
+  "author": "OpenClaw Railway Template",
+  "license": "MIT"
+}

@@ -8,6 +8,14 @@ This repo packages **Openclaw** for Railway with a small **/setup** web wizard s
 - A friendly **Setup Wizard** at `/setup` (protected by a password)
 - Persistent state via **Railway Volume** (so config/credentials/memory survive redeploys)
 - One-click **Export backup** (so users can migrate off Railway later)
+- **7 Pre-installed Skills** from ClawHub:
+  - **gog** - Google Workspace CLI (Gmail, Calendar, Drive, Contacts, Sheets, Docs)
+  - **summarize** - Summarize URLs/files (web, PDFs, images, audio, YouTube)
+  - **weather** - Weather forecasts (no API key required)
+  - **skill-creator** - Create custom skills
+  - **daily-ai-news** - AI news aggregator
+  - **market-news-analyst** - Financial market analysis
+  - **pdf** - PDF manipulation toolkit
 
 ## How it works (high level)
 
@@ -27,7 +35,9 @@ Create a new template in Railway with these steps:
 4. **Enable Public Networking** (HTTP) — Railway will assign a domain like `https://your-app.up.railway.app`
 5. **Deploy**
 
-That's it! Just one variable to set.
+That's it! Railway automatically provides `RAILWAY_PUBLIC_DOMAIN` which the template uses to configure OpenClaw's allowedOrigins for WebSocket connections.
+
+**Note**: For custom domains, set `PUBLIC_URL` to your custom domain (e.g., `https://custom.example.com`).
 
 ## Getting started
 
@@ -70,6 +80,33 @@ The setup wizard supports these AI providers:
 4. Copy the **Bot Token** and paste it into `/setup`
 5. Invite the bot to your server (OAuth2 URL Generator → scopes: `bot`, `applications.commands`; then choose permissions)
 
+### Google OAuth credentials (for gog skill)
+
+The **gog** skill provides Google Workspace CLI access (Gmail, Calendar, Drive, Contacts, Sheets, Docs). To set up Google OAuth credentials:
+
+1. Go to [Google Cloud Console](https://console.cloud.google.com/)
+2. Create a new project or select an existing one
+3. Enable the Google Workspace APIs you need (Gmail, Calendar Drive, etc.)
+4. Go to **APIs & Services** → **Credentials**
+5. Click **Create Credentials** → **OAuth client ID**
+6. Choose **Desktop app** as the application type
+7. Download the JSON file and rename it to `client_secret.json`
+
+**To use with Railway (recommended - secure):**
+
+1. Encode your `client_secret.json` to base64:
+   ```bash
+   base64 -w 0 client_secret.json
+   ```
+
+2. Add the base64 string as a Railway environment variable:
+   - Name: `GOOGLE_CLIENT_SECRET_BASE64`
+   - Value: `<paste the base64 string>`
+
+3. Redeploy your service. The credentials will be automatically decoded and stored securely in the persistent volume.
+
+**The credentials file will persist** across container rebuilds thanks to the Railway Volume mounted at `/data`.
+
 ## Local testing
 
 ```bash
@@ -91,3 +128,6 @@ docker run --rm -p 8080:8080 \
 
 - **[Atlas Cloud Testing Guide](docs/ATLAS_CLOUD_TESTING.md)** - Step-by-step guide for deploying and testing OpenClaw with Atlas Cloud on Railway
 - **[Learning OpenClaw Tutorial](docs/learning-openclaw-tutorial.md)** - Comprehensive deployment and configuration tutorial
+- **[Magic Patterns Integration](docs/MAGICPATTERNS_INTEGRATION.md)** - Guide to integrating Magic Patterns AI design generation with OpenClaw
+- **[Patient Portal Testing Guide](docs/PATIENT_PORTAL_TESTING_GUIDE.md)** - How to test the Patient Health Portal Helper skill with real credentials
+- **[Patient Assistant System](docs/PATIENT_ASSISTANT.md)** - Complete patient personal assistant documentation

@@ -6,5 +6,31 @@ healthcheckPath = "/setup/healthz"
 healthcheckTimeout = 300
 restartPolicyType = "on_failure"
 
+# Persistent volume for OpenClaw state
+# This ensures configuration, credentials, and workspace survive rebuilds
+[volumes]
+# Mount volume to /data for persistent storage
+# Contains:
+# - /data/.openclaw -> configuration, credentials, sessions
+# - /data/workspace -> agent workspace files
+data = "/data"
+
 [variables]
 PORT = "8080"
+
+# Optional: Google OAuth credentials for gog skill (Google Workspace CLI)
+# Encode your client_secret.json file to base64 and paste it here
+# Run: base64 -w 0 client_secret.json
+# Leave as-is if not using Google Workspace features
+GOOGLE_CLIENT_SECRET_BASE64 = "Replace_Me"
+
+# Optional: Health Portal credentials for auto-syncing appointments
+# Configure these in Railway to enable automatic health portal sync
+# Leave as-is if not using health portal integration
+HEALTH_PORTAL_URL = "Replace_Me"                # e.g., https://mychart.example.com
+HEALTH_PORTAL_TYPE = "MyChart"                  # MyChart, Epic, Cerner, AthenaHealth
+HEALTH_PORTAL_USERNAME = "Replace_Me"           # Portal login username
+HEALTH_PORTAL_PASSWORD = "Replace_Me"           # Portal login password
+HEALTH_PORTAL_FAMILY_ATTENDEES = ""             # Comma-separated family emails
+HEALTH_PORTAL_SYNC_TIME = "09:00"               # Daily sync time (UTC) - 9AM UTC = 4AM EST
+HEALTH_PORTAL_ENABLED = "false"                 # Set to "true" to enable sync

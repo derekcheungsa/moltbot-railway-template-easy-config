@@ -54,6 +54,8 @@ RUN apt-get update \
     file \
     git \
     python3 \
+    python3-venv \
+    python3-pip \
     pkg-config \
     sudo \
   && rm -rf /var/lib/apt/lists/*
@@ -77,6 +79,49 @@ RUN corepack enable
 COPY package.json pnpm-lock.yaml ./
 RUN pnpm install --prod --frozen-lockfile && pnpm store prune
 
+# Install Python PDF libraries for pdf skill using virtual environment approach
+# Create a virtual environment to respect PEP 668 (externally managed Python)
+RUN python3 -m venv /opt/pdf-venv
+
+# Install PDF libraries in the virtual environment
+RUN /opt/pdf-venv/bin/pip install --no-cache-dir pypdf pdfplumber reportlab && \
+    apt-get update && \
+    DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+    poppler-utils && \
+    rm -rf /var/lib/apt/lists/*
+
+# Add venv binaries to PATH for skill usage
+ENV PATH="/opt/pdf-venv/bin:${PATH}"
+
+# Install Chromium for Puppeteer (patient-health-portal-helper skill)
+# Use specific version to ensure compatibility
+RUN apt-get update \
+  && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+    ca-certificates \
+    fonts-ipafont-gothic \
+    fonts-wqy-zenhei \
+    fonts-thai-tlwg \
+    fonts-kacst \
+    fonts-freefont-ttf \
+    libxss1 \
+    && rm -rf /var/lib/apt/lists/* \
+  && wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | gpg --dearmor -o /usr/share/keyrings/googlechrome-linux-keyring.gpg \
+  && echo "deb [arch=amd64 signed-by=/usr/share/keyrings/googlechrome-linux-keyring.gpg] http://dl.google.com/linux/chrome/deb/ stable main" > /etc/apt/sources.list.d/google-chrome.list \
+  && apt-get update \
+  && apt-get install -y google-chrome-stable \
+  && rm -rf /var/lib/apt/lists/*
+
+# Copy all skills first (for dependency installation)
+COPY skills /tmp/skills
+
+# Install patient-health-portal-helper skill dependencies
+# Note: package.json is in the lib/ subdirectory (ES modules structure)
+WORKDIR /tmp/skills/patient-health-portal-helper/lib
+RUN npm install && npm cache clean --force
+
+# Return to app directory
+WORKDIR /app
+
 # Copy built openclaw
 COPY --from=openclaw-build /openclaw /openclaw
 
@@ -85,6 +130,9 @@ RUN printf '%s\n' '#!/usr/bin/env bash' 'exec node /openclaw/dist/entry.js "$@"'
   && chmod +x /usr/local/bin/openclaw
 
 COPY src ./src
+
+# Copy ClawHub skills (with installed dependencies)
+RUN mkdir -p /data/.openclaw && cp -r /tmp/skills /data/.openclaw/skills && rm -rf /tmp/skills
 
 ENV PORT=8080
 EXPOSE 8080
