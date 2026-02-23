@@ -1199,9 +1199,12 @@ proxy.on("proxyReqWs", (proxyReq, req, socket, options, head) => {
 // OpenClaw needs X-Forwarded-For to recognize trusted proxy connections
 // We replace it with 127.0.0.1 (the wrapper) which is in trustedProxies
 function normalizeProxyHeaders(req, res, next) {
-  // Replace X-Forwarded-For with the wrapper's IP (127.0.0.1)
-  // This allows the gateway to recognize it as a trusted proxy connection
-  req.headers["x-forwarded-for"] = "127.0.0.1";
+  // DELETE X-Forwarded-For instead of setting it.
+  // When this header exists (even with valid value 127.0.0.1), OpenClaw treats
+  // the connection as "proxied" rather than "direct local", which can trigger
+  // pairing requirements. By deleting it, the connection appears direct from
+  // the wrapper (127.0.0.1) without any proxy indication.
+  delete req.headers["x-forwarded-for"];
 
   // Override Host to localhost so gateway treats this as a local connection
   // Without this, the gateway sees the Railway domain and treats it as remote
