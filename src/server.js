@@ -104,6 +104,15 @@ async function startGateway() {
   fs.mkdirSync(STATE_DIR, { recursive: true });
   fs.mkdirSync(WORKSPACE_DIR, { recursive: true });
 
+  // Fix permissions on state directory to address security warnings
+  // State dir contains sensitive data (config, credentials, sessions)
+  try {
+    fs.chmodSync(STATE_DIR, 0o700);
+    console.log(`[gateway] ✓ Fixed permissions: ${STATE_DIR} (700: owner only)`);
+  } catch (err) {
+    console.warn(`[gateway] ⚠️  Could not set permissions on ${STATE_DIR}: ${err.message}`);
+  }
+
   // Sync wrapper token to openclaw.json before every gateway start.
   // This ensures the gateway's config-file token matches what the wrapper injects via proxy.
   console.log(`[gateway] ========== GATEWAY START TOKEN SYNC ==========`);
@@ -645,6 +654,14 @@ app.post("/setup/api/run", requireSetupAuth, async (req, res) => {
 
     fs.mkdirSync(STATE_DIR, { recursive: true });
     fs.mkdirSync(WORKSPACE_DIR, { recursive: true });
+
+    // Fix permissions on state directory to address security warnings
+    try {
+      fs.chmodSync(STATE_DIR, 0o700);
+      console.log(`[onboard] ✓ Fixed permissions: ${STATE_DIR} (700: owner only)`);
+    } catch (err) {
+      console.warn(`[onboard] ⚠️  Could not set permissions on ${STATE_DIR}: ${err.message}`);
+    }
 
     const payload = req.body || {};
     const onboardArgs = buildOnboardArgs(payload);
