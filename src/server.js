@@ -729,12 +729,33 @@ app.post("/setup/api/run", requireSetupAuth, async (req, res) => {
       // This prevents "origin not allowed" errors during the restart cascade.
       console.log(`[onboard] Configuring Control UI origin and pairing policy (BEFORE other configs)...`);
 
-      // Allow origins that match the Host header (for Railway dynamic domains)
+      // Determine the allowed origin for the Control UI
+      // On Railway, use the public domain; on local dev, use fallback
+      let allowedOrigin = null;
+      const railwayDomain = process.env.RAILWAY_PUBLIC_DOMAIN;
+      if (railwayDomain) {
+        // Railway provides the public domain (e.g., "example.up.railway.app")
+        allowedOrigin = `https://${railwayDomain}`;
+        console.log(`[onboard] Using Railway public domain: ${allowedOrigin}`);
+      } else {
+        // For local development, use localhost as fallback
+        allowedOrigin = "http://localhost:8080";
+        console.log(`[onboard] No RAILWAY_PUBLIC_DOMAIN found, using local fallback: ${allowedOrigin}`);
+      }
+
+      // Set explicit allowed origin (preferred over dangerouslyAllowHostHeaderOriginFallback)
+      const allowedOriginsResult = await runCmd(
+        OPENCLAW_NODE,
+        clawArgs(["config", "set", "--json", "gateway.controlUi.allowedOrigins", JSON.stringify([allowedOrigin])]),
+      );
+      console.log(`[onboard] allowedOrigins result: code=${allowedOriginsResult.code}, output=${allowedOriginsResult.output?.slice(0, 150)}`);
+
+      // Still set the fallback as a safety net for local dev or edge cases
       const fallbackResult = await runCmd(
         OPENCLAW_NODE,
         clawArgs(["config", "set", "gateway.controlUi.dangerouslyAllowHostHeaderOriginFallback", "true"]),
       );
-      console.log(`[onboard] dangerouslyAllowHostHeaderOriginFallback result: code=${fallbackResult.code}, output=${fallbackResult.output?.slice(0, 150)}`);
+      console.log(`[onboard] dangerouslyAllowHostHeaderOriginFallback (safety net): code=${fallbackResult.code}, output=${fallbackResult.output?.slice(0, 150)}`);
 
       // Disable device identity checks for Control UI (token auth mode requires this for pairing bypass)
       const deviceAuthResult = await runCmd(
