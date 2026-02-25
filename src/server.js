@@ -762,11 +762,6 @@ app.post("/setup/api/run", requireSetupAuth, async (req, res) => {
           String(INTERNAL_GATEWAY_PORT),
         ]),
       );
-      // Allow Control UI access without device pairing (fixes error 1008: pairing required)
-      await runCmd(
-        OPENCLAW_NODE,
-        clawArgs(["config", "set", "gateway.controlUi.allowInsecureAuth", "true"]),
-      );
 
       const channelsHelp = await runCmd(
         OPENCLAW_NODE,
@@ -1060,38 +1055,7 @@ proxy.on("proxyReqWs", (proxyReq, req, socket, options, head) => {
   proxyReq.setHeader("Authorization", `Bearer ${OPENCLAW_GATEWAY_TOKEN}`);
 });
 
-// Middleware to strip Railway proxy headers BEFORE they reach the proxy
-// This prevents OpenClaw gateway from detecting "untrusted proxy" and requiring device pairing
-function stripProxyHeaders(req, res, next) {
-  // Remove all proxy-related headers that Railway might add
-  delete req.headers["x-forwarded-for"];
-  delete req.headers["x-forwarded-host"];
-  delete req.headers["x-forwarded-proto"];
-  delete req.headers["x-real-ip"];
-  delete req.headers["forwarded"];
-  delete req.headers["x-railway"]; // Railway-specific header
-  delete req.headers["x-railway-request-id"];
-  delete req.headers["x-vercel-id"]; // If proxied through Vercel
-  delete req.headers["x-vercel-ip-country"];
-  delete req.headers["cf-connecting-ip"]; // Cloudflare
-  delete req.headers["cf-ray"];
-  delete req.headers["cf-ipcountry"];
-
-  // Override Host header to appear local
-  // OpenClaw treats loopback connections with non-local Host headers as remote
-  // This causes "pairing required" errors even when allowInsecureAuth is true
-  req.headers["host"] = `localhost:${INTERNAL_GATEWAY_PORT}`;
-
-  // Override Origin header to appear local for WebSocket connections
-  // OpenClaw validates the Origin header and rejects non-local origins
-  // This causes "origin not allowed" errors
-  if (req.headers["origin"]) {
-    req.headers["origin"] = `http://localhost:${INTERNAL_GATEWAY_PORT}`;
-  }
-  next();
-}
-
-app.use(stripProxyHeaders, async (req, res) => {
+app.use(async (req, res) => {
   // If not configured, force users to /setup for any non-setup routes.
   if (!isConfigured() && !req.path.startsWith("/setup")) {
     return res.redirect("/setup");
@@ -1130,31 +1094,6 @@ server.on("upgrade", async (req, socket, head) => {
   } catch {
     socket.destroy();
     return;
-  }
-
-  // Strip Railway proxy headers from WebSocket upgrade requests
-  // This prevents "pairing required" and "origin not allowed" errors
-  delete req.headers["x-forwarded-for"];
-  delete req.headers["x-forwarded-host"];
-  delete req.headers["x-forwarded-proto"];
-  delete req.headers["x-real-ip"];
-  delete req.headers["forwarded"];
-  delete req.headers["x-railway"];
-  delete req.headers["x-railway-request-id"];
-  delete req.headers["x-vercel-id"];
-  delete req.headers["x-vercel-ip-country"];
-  delete req.headers["cf-connecting-ip"];
-  delete req.headers["cf-ray"];
-  delete req.headers["cf-ipcountry"];
-
-  // Override Host header to appear local
-  // OpenClaw treats loopback connections with non-local Host headers as remote
-  req.headers["host"] = `localhost:${INTERNAL_GATEWAY_PORT}`;
-
-  // Override Origin header to appear local
-  // OpenClaw validates the Origin header and rejects non-local origins
-  if (req.headers["origin"]) {
-    req.headers["origin"] = `http://localhost:${INTERNAL_GATEWAY_PORT}`;
   }
 
   // Proxy WebSocket upgrade (auth token injected via proxyReqWs event)
