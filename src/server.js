@@ -763,18 +763,19 @@ app.post("/setup/api/run", requireSetupAuth, async (req, res) => {
         ]),
       );
 
-      // Configure Control UI to allow Railway origins and trust the wrapper as a proxy
-      // This fixes "origin not allowed" and "untrusted proxy" errors without header stripping
+      // Configure Control UI to allow Railway origins
+      // Railway domains are dynamic, so use Host-header fallback which allows
+      // origins that match the request Host header (exactly Railway's scenario)
       console.log(`[onboard] Configuring Control UI origin policy...`);
 
-      // Allow all origins using wildcard (Railway domains are dynamic)
-      const originsResult = await runCmd(
+      // Allow origins that match the Host header (for Railway dynamic domains)
+      const fallbackResult = await runCmd(
         OPENCLAW_NODE,
-        clawArgs(["config", "set", "--json", "gateway.controlUi.allowedOrigins", '["*"]']),
+        clawArgs(["config", "set", "gateway.controlUi.dangerouslyAllowHostHeaderOriginFallback", "true"]),
       );
-      console.log(`[onboard] allowedOrigins result: code=${originsResult.code}, output=${originsResult.output?.slice(0, 150)}`);
+      console.log(`[onboard] dangerouslyAllowHostHeaderOriginFallback result: code=${fallbackResult.code}, output=${fallbackResult.output?.slice(0, 150)}`);
 
-      // Trust the wrapper (127.0.0.1) as a proxy so it can forward real client IPs
+      // Trust the wrapper (127.0.0.1) as a proxy for client IP detection
       const proxiesResult = await runCmd(
         OPENCLAW_NODE,
         clawArgs(["config", "set", "--json", "gateway.trustedProxies", '["127.0.0.1", "::1", "localhost"]']),
