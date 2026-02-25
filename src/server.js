@@ -229,7 +229,7 @@ async function ensureGatewayRunning() {
   return { ok: true };
 }
 
-async function restartGateway() {
+async function stopGateway() {
   if (gatewayProc) {
     const oldProc = gatewayProc;
     try {
@@ -238,7 +238,6 @@ async function restartGateway() {
       // ignore
     }
     // Wait for the process to actually exit, not just a fixed delay.
-    // Use a longer timeout for graceful shutdown with active WebSocket connections.
     const timeoutMs = 10_000;
     const start = Date.now();
     while (oldProc.exitCode === null && Date.now() - start < timeoutMs) {
@@ -253,10 +252,14 @@ async function restartGateway() {
         // ignore
       }
     } else {
-      console.log(`[gateway] Process exited cleanly (code=${oldProc.exitCode})`);
+      console.log(`[gateway] Process stopped cleanly (code=${oldProc.exitCode})`);
     }
     gatewayProc = null;
   }
+}
+
+async function restartGateway() {
+  await stopGateway();
   return ensureGatewayRunning();
 }
 
@@ -725,9 +728,14 @@ app.post("/setup/api/run", requireSetupAuth, async (req, res) => {
 
     // Optional channel setup (only after successful onboarding, and only if the installed CLI supports it).
     if (ok) {
-      // IMPORTANT: Set origin validation and proxy settings FIRST, before other configs that trigger restarts.
-      // This prevents "origin not allowed" errors during the restart cascade.
-      console.log(`[onboard] Configuring Control UI origin and pairing policy (BEFORE other configs)...`);
+      // IMPORTANT: Stop gateway before making config changes to prevent partial-config connections.
+      // Each `config set` triggers a restart, so we batch all changes and restart once at the end.
+      console.log(`[onboard] Stopping gateway to apply config changes atomically...`);
+      await stopGateway();
+      console.log(`[onboard] Gateway stopped, now applying all config changes...`);
+
+      // Configure Control UI origin and pairing policy
+      console.log(`[onboard] Configuring Control UI origin and pairing policy...`);
 
       // Determine the allowed origin for the Control UI
       // On Railway, use the public domain; on local dev, use fallback
