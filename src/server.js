@@ -66,6 +66,7 @@ function isConfigured() {
 
 let gatewayProc = null;
 let gatewayStarting = null;
+let onboardingInProgress = false; // Prevents middleware from starting gateway during onboarding
 
 function sleep(ms) {
   return new Promise((r) => setTimeout(r, ms));
@@ -103,6 +104,15 @@ async function startGateway() {
 
   fs.mkdirSync(STATE_DIR, { recursive: true });
   fs.mkdirSync(WORKSPACE_DIR, { recursive: true });
+
+  // Fix permissions on state directory to address security warnings
+  // State dir contains sensitive data (config, credentials, sessions)
+  try {
+    fs.chmodSync(STATE_DIR, 0o700);
+    console.log(`[gateway] ✓ Fixed permissions: ${STATE_DIR} (700: owner only)`);
+  } catch (err) {
+    console.warn(`[gateway] ⚠️  Could not set permissions on ${STATE_DIR}: ${err.message}`);
+  }
 
   // Sync wrapper token to openclaw.json before every gateway start.
   // This ensures the gateway's config-file token matches what the wrapper injects via proxy.
@@ -220,17 +230,37 @@ async function ensureGatewayRunning() {
   return { ok: true };
 }
 
-async function restartGateway() {
+async function stopGateway() {
   if (gatewayProc) {
+    const oldProc = gatewayProc;
     try {
-      gatewayProc.kill("SIGTERM");
+      oldProc.kill("SIGTERM");
     } catch {
       // ignore
     }
-    // Give it a moment to exit and release the port.
-    await sleep(750);
+    // Wait for the process to actually exit, not just a fixed delay.
+    const timeoutMs = 10_000;
+    const start = Date.now();
+    while (oldProc.exitCode === null && Date.now() - start < timeoutMs) {
+      await sleep(100);
+    }
+    if (oldProc.exitCode === null) {
+      console.warn(`[gateway] Process did not exit after ${timeoutMs}ms, forcing SIGKILL`);
+      try {
+        oldProc.kill("SIGKILL");
+        await sleep(500);
+      } catch {
+        // ignore
+      }
+    } else {
+      console.log(`[gateway] Process stopped cleanly (code=${oldProc.exitCode})`);
+    }
     gatewayProc = null;
   }
+}
+
+async function restartGateway() {
+  await stopGateway();
   return ensureGatewayRunning();
 }
 
@@ -258,6 +288,37 @@ function requireSetupAuth(req, res, next) {
     return res.status(401).send("Invalid password");
   }
   return next();
+}
+
+// Configure gog CLI environment for persistent authentication in containers
+// Must be called before decodeCredentialsFromEnv to set up the environment
+function configureGogEnvironment() {
+  // Set default values if not provided
+  const gogConfigDir = process.env.GOG_CONFIG_DIR || "/data/.gog-config";
+  const keyringBackend = process.env.GOG_KEYRING_BACKEND || "file";
+  const keyringPassword = process.env.GOG_KEYRING_PASSWORD || "";
+
+  // Set XDG_CONFIG_HOME to persist gog config to Railway volume
+  process.env.XDG_CONFIG_HOME = gogConfigDir;
+  process.env.GOG_KEYRING_BACKEND = keyringBackend;
+
+  // Create gog config directory
+  try {
+    fs.mkdirSync(gogConfigDir, { recursive: true });
+    console.log(`[gog] ✅ Config directory: ${gogConfigDir}`);
+  } catch (err) {
+    console.warn(`[gog] ⚠️  Could not create config directory: ${err.message}`);
+  }
+
+  // Warn if keyring password is not set
+  if (!keyringPassword || keyringPassword.includes("Replace")) {
+    console.warn(`[gog] ⚠️  GOG_KEYRING_PASSWORD not set or is placeholder`);
+    console.warn(`[gog]    For Google Workspace features, set a secure password in Railway variables`);
+  } else {
+    console.log(`[gog] ✅ Keyring backend: ${keyringBackend}`);
+  }
+
+  return { gogConfigDir, keyringBackend, keyringPassword };
 }
 
 // Decode base64-encoded credentials on startup
@@ -303,13 +364,18 @@ function decodeCredentialsFromEnv() {
 
     // Set environment variable for gog skill to find it
     process.env.GOOGLE_CREDENTIALS_PATH = credentialsPath;
+
+    console.log(`[gog] ℹ️  To complete Google Workspace setup, run via Railway Shell:`);
+    console.log(`[gog]    gog auth credentials ${credentialsPath}`);
+    console.log(`[gog]    gog auth add your@gmail.com --services gmail --manual`);
   } catch (err) {
     console.error(`[credentials] ❌ Failed to decode Google credentials: ${err.message}`);
     console.error(`[credentials] The GOOGLE_CLIENT_SECRET_BASE64 environment variable may be invalid`);
   }
 }
 
-// Decode credentials on startup
+// Configure gog environment and decode credentials on startup
+configureGogEnvironment();
 decodeCredentialsFromEnv();
 
 const app = express();
@@ -332,6 +398,10 @@ app.get("/setup/styles.css", requireSetupAuth, (_req, res) => {
 
 app.get("/setup", requireSetupAuth, (_req, res) => {
   res.sendFile(path.join(process.cwd(), "src", "public", "setup.html"));
+});
+
+app.get("/setup/google", requireSetupAuth, (_req, res) => {
+  res.sendFile(path.join(process.cwd(), "src", "public", "google-setup.html"));
 });
 
 app.get("/setup/api/status", requireSetupAuth, async (_req, res) => {
@@ -633,6 +703,9 @@ function runCmd(cmd, args, opts = {}, extraEnv = {}) {
 }
 
 app.post("/setup/api/run", requireSetupAuth, async (req, res) => {
+  // Set flag to prevent middleware from starting gateway during onboarding
+  onboardingInProgress = true;
+
   try {
     if (isConfigured()) {
       await ensureGatewayRunning();
@@ -645,6 +718,14 @@ app.post("/setup/api/run", requireSetupAuth, async (req, res) => {
 
     fs.mkdirSync(STATE_DIR, { recursive: true });
     fs.mkdirSync(WORKSPACE_DIR, { recursive: true });
+
+    // Fix permissions on state directory to address security warnings
+    try {
+      fs.chmodSync(STATE_DIR, 0o700);
+      console.log(`[onboard] ✓ Fixed permissions: ${STATE_DIR} (700: owner only)`);
+    } catch (err) {
+      console.warn(`[onboard] ⚠️  Could not set permissions on ${STATE_DIR}: ${err.message}`);
+    }
 
     const payload = req.body || {};
     const onboardArgs = buildOnboardArgs(payload);
@@ -691,8 +772,58 @@ app.post("/setup/api/run", requireSetupAuth, async (req, res) => {
 
     // Optional channel setup (only after successful onboarding, and only if the installed CLI supports it).
     if (ok) {
-      // Ensure gateway token is written into config so the browser UI can authenticate reliably.
-      // (We also enforce loopback bind since the wrapper proxies externally.)
+      // IMPORTANT: Stop gateway before making config changes to prevent partial-config connections.
+      // Each `config set` triggers a restart, so we batch all changes and restart once at the end.
+      console.log(`[onboard] Stopping gateway to apply config changes atomically...`);
+      await stopGateway();
+      console.log(`[onboard] Gateway stopped, now applying all config changes...`);
+
+      // Configure Control UI origin and pairing policy
+      console.log(`[onboard] Configuring Control UI origin and pairing policy...`);
+
+      // Determine the allowed origin for the Control UI
+      // On Railway, use the public domain; on local dev, use fallback
+      let allowedOrigin = null;
+      const railwayDomain = process.env.RAILWAY_PUBLIC_DOMAIN;
+      if (railwayDomain) {
+        // Railway provides the public domain (e.g., "example.up.railway.app")
+        allowedOrigin = `https://${railwayDomain}`;
+        console.log(`[onboard] Using Railway public domain: ${allowedOrigin}`);
+      } else {
+        // For local development, use localhost as fallback
+        allowedOrigin = "http://localhost:8080";
+        console.log(`[onboard] No RAILWAY_PUBLIC_DOMAIN found, using local fallback: ${allowedOrigin}`);
+      }
+
+      // Set explicit allowed origin (preferred over dangerouslyAllowHostHeaderOriginFallback)
+      const allowedOriginsResult = await runCmd(
+        OPENCLAW_NODE,
+        clawArgs(["config", "set", "--json", "gateway.controlUi.allowedOrigins", JSON.stringify([allowedOrigin])]),
+      );
+      console.log(`[onboard] allowedOrigins result: code=${allowedOriginsResult.code}, output=${allowedOriginsResult.output?.slice(0, 150)}`);
+
+      // Still set the fallback as a safety net for local dev or edge cases
+      const fallbackResult = await runCmd(
+        OPENCLAW_NODE,
+        clawArgs(["config", "set", "gateway.controlUi.dangerouslyAllowHostHeaderOriginFallback", "true"]),
+      );
+      console.log(`[onboard] dangerouslyAllowHostHeaderOriginFallback (safety net): code=${fallbackResult.code}, output=${fallbackResult.output?.slice(0, 150)}`);
+
+      // Disable device identity checks for Control UI (token auth mode requires this for pairing bypass)
+      const deviceAuthResult = await runCmd(
+        OPENCLAW_NODE,
+        clawArgs(["config", "set", "gateway.controlUi.dangerouslyDisableDeviceAuth", "true"]),
+      );
+      console.log(`[onboard] dangerouslyDisableDeviceAuth result: code=${deviceAuthResult.code}, output=${deviceAuthResult.output?.slice(0, 150)}`);
+
+      // Trust the wrapper (127.0.0.1) as a proxy for client IP detection
+      const proxiesResult = await runCmd(
+        OPENCLAW_NODE,
+        clawArgs(["config", "set", "--json", "gateway.trustedProxies", '["127.0.0.1", "::1", "localhost"]']),
+      );
+      console.log(`[onboard] trustedProxies result: code=${proxiesResult.code}, output=${proxiesResult.output?.slice(0, 150)}`);
+
+      // Now set the remaining gateway configs (these will trigger restarts, but origin validation is already configured)
       console.log(`[onboard] Now syncing wrapper token to config (${OPENCLAW_GATEWAY_TOKEN.slice(0, 8)}...)`);
 
       await runCmd(OPENCLAW_NODE, clawArgs(["config", "set", "gateway.mode", "local"]));
@@ -761,11 +892,6 @@ app.post("/setup/api/run", requireSetupAuth, async (req, res) => {
           "gateway.port",
           String(INTERNAL_GATEWAY_PORT),
         ]),
-      );
-      // Allow Control UI access without device pairing (fixes error 1008: pairing required)
-      await runCmd(
-        OPENCLAW_NODE,
-        clawArgs(["config", "set", "gateway.controlUi.allowInsecureAuth", "true"]),
       );
 
       const channelsHelp = await runCmd(
@@ -929,6 +1055,9 @@ app.post("/setup/api/run", requireSetupAuth, async (req, res) => {
     return res
       .status(500)
       .json({ ok: false, output: `Internal error: ${String(err)}` });
+  } finally {
+    // Always clear the flag, even on error
+    onboardingInProgress = false;
   }
 });
 
@@ -960,6 +1089,33 @@ app.get("/setup/api/debug", requireSetupAuth, async (_req, res) => {
   });
 });
 
+app.get("/setup/api/pairing/list", requireSetupAuth, async (_req, res) => {
+  const r = await runCmd(
+    OPENCLAW_NODE,
+    clawArgs(["pairing", "list"]),
+  );
+  if (r.code !== 0) {
+    return res.json({ ok: true, requests: [] });
+  }
+  // Parse output format: "CODE │ telegramUserId │ timestamp"
+  const lines = r.output.trim().split('\n');
+  const requests = [];
+  // Skip header row (if present) and parse each line
+  for (const line of lines) {
+    if (line.includes('│')) {
+      const parts = line.split('│').map(s => s.trim());
+      if (parts.length >= 2 && parts[0] && !parts[0].includes('Code')) {
+        requests.push({
+          code: parts[0],
+          userId: parts[1] || 'unknown',
+          timestamp: parts[2] || new Date().toISOString()
+        });
+      }
+    }
+  }
+  return res.json({ ok: true, requests });
+});
+
 app.post("/setup/api/pairing/approve", requireSetupAuth, async (req, res) => {
   const { channel, code } = req.body || {};
   if (!channel || !code) {
@@ -974,6 +1130,149 @@ app.post("/setup/api/pairing/approve", requireSetupAuth, async (req, res) => {
   return res
     .status(r.code === 0 ? 200 : 500)
     .json({ ok: r.code === 0, output: r.output });
+});
+
+// Google Workspace (gog) OAuth authentication endpoints
+// These allow completing gog authentication without Railway Shell access
+
+app.get("/setup/api/google/status", requireSetupAuth, async (_req, res) => {
+  // Check if gog is installed and configured
+  const gogPath = "/home/linuxbrew/.linuxbrew/bin/gog";
+  const credentialsPath = path.join(STATE_DIR, "credentials", "client_secret.json");
+
+  try {
+    // Check if credentials file exists
+    const hasCredentials = fs.existsSync(credentialsPath);
+
+    console.log(`[google-status] Credentials file exists: ${hasCredentials} at ${credentialsPath}`);
+
+    // Check for authenticated accounts (only if credentials exist)
+    let accounts = [];
+    let gogError = null;
+
+    if (hasCredentials) {
+      try {
+        const accountsResult = await runCmd(
+          gogPath,
+          ["auth", "list", "--json"],
+          {},
+          {
+            GOG_KEYRING_BACKEND: process.env.GOG_KEYRING_BACKEND || "file",
+            GOG_KEYRING_PASSWORD: process.env.GOG_KEYRING_PASSWORD || "",
+            XDG_CONFIG_HOME: process.env.GOG_CONFIG_DIR || "/data/.gog-config",
+          }
+        );
+
+        console.log(`[google-status] gog auth list result: code=${accountsResult.code}`);
+        if (accountsResult.output) {
+          console.log(`[google-status] gog output: ${accountsResult.output.slice(0, 200)}`);
+        }
+
+        if (accountsResult.code === 0 && accountsResult.output) {
+          try {
+            const parsed = JSON.parse(accountsResult.output);
+            // gog returns {accounts: [...]} not an array directly
+            accounts = parsed.accounts || [];
+          } catch (parseErr) {
+            console.log(`[google-status] Failed to parse gog output as JSON: ${parseErr.message}`);
+          }
+        } else if (accountsResult.code !== 0) {
+          gogError = accountsResult.output || "gog command failed";
+          console.log(`[google-status] gog command error: ${gogError}`);
+        }
+      } catch (cmdErr) {
+        gogError = cmdErr.message;
+        console.log(`[google-status] Failed to run gog command: ${gogError}`);
+      }
+    }
+
+    res.json({
+      ok: true,
+      hasCredentials,
+      hasAccounts: accounts.length > 0,
+      accounts: accounts.map((a) => ({ email: a.email, services: a.services })),
+      gogError,
+    });
+  } catch (err) {
+    console.log(`[google-status] Unexpected error: ${err.message}`);
+    res.status(500).json({ ok: false, error: err.message });
+  }
+});
+
+app.post("/setup/api/google/auth-url", requireSetupAuth, async (req, res) => {
+  const { email, services = "gmail" } = req.body || {};
+  if (!email) {
+    return res.status(400).json({ ok: false, error: "Missing email address" });
+  }
+
+  const gogPath = "/home/linuxbrew/.linuxbrew/bin/gog";
+  const credentialsPath = path.join(STATE_DIR, "credentials", "client_secret.json");
+
+  try {
+    // First, ensure gog knows about the credentials
+    await runCmd(gogPath, ["auth", "credentials", credentialsPath], {}, {
+      GOG_KEYRING_BACKEND: process.env.GOG_KEYRING_BACKEND || "file",
+      GOG_KEYRING_PASSWORD: process.env.GOG_KEYRING_PASSWORD || "",
+      XDG_CONFIG_HOME: process.env.GOG_CONFIG_DIR || "/data/.gog-config",
+    });
+
+    // Generate the manual auth URL
+    const result = await runCmd(
+      gogPath,
+      ["auth", "add", String(email), "--services", String(services), "--manual", "--remote", "--step", "1"],
+      {},
+      {
+        GOG_KEYRING_BACKEND: process.env.GOG_KEYRING_BACKEND || "file",
+        GOG_KEYRING_PASSWORD: process.env.GOG_KEYRING_PASSWORD || "",
+        XDG_CONFIG_HOME: process.env.GOG_CONFIG_DIR || "/data/.gog-config",
+      }
+    );
+
+    if (result.code !== 0) {
+      return res.status(500).json({ ok: false, error: result.output });
+    }
+
+    // Extract the auth URL from the output
+    const urlMatch = result.output?.match(/https:\/\/accounts\.google\.com\/o\/oauth2\/auth[^\s]+/);
+    if (!urlMatch) {
+      return res.status(500).json({ ok: false, error: "Could not extract auth URL from gog output", output: result.output });
+    }
+
+    res.json({ ok: true, authUrl: urlMatch[0] });
+  } catch (err) {
+    res.status(500).json({ ok: false, error: err.message });
+  }
+});
+
+app.post("/setup/api/google/callback", requireSetupAuth, async (req, res) => {
+  const { email, callbackUrl, services = "gmail" } = req.body || {};
+  if (!email || !callbackUrl) {
+    return res.status(400).json({ ok: false, error: "Missing email or callbackUrl" });
+  }
+
+  const gogPath = "/home/linuxbrew/.linuxbrew/bin/gog";
+
+  try {
+    // Step 2: Complete the auth with the callback URL
+    const result = await runCmd(
+      gogPath,
+      ["auth", "add", String(email), "--services", String(services), "--remote", "--step", "2", "--auth-url", String(callbackUrl)],
+      {},
+      {
+        GOG_KEYRING_BACKEND: process.env.GOG_KEYRING_BACKEND || "file",
+        GOG_KEYRING_PASSWORD: process.env.GOG_KEYRING_PASSWORD || "",
+        XDG_CONFIG_HOME: process.env.GOG_CONFIG_DIR || "/data/.gog-config",
+      }
+    );
+
+    if (result.code !== 0) {
+      return res.status(500).json({ ok: false, error: result.output });
+    }
+
+    res.json({ ok: true, output: result.output });
+  } catch (err) {
+    res.status(500).json({ ok: false, error: err.message });
+  }
 });
 
 app.post("/setup/api/reset", requireSetupAuth, async (_req, res) => {
@@ -1060,44 +1359,15 @@ proxy.on("proxyReqWs", (proxyReq, req, socket, options, head) => {
   proxyReq.setHeader("Authorization", `Bearer ${OPENCLAW_GATEWAY_TOKEN}`);
 });
 
-// Middleware to strip Railway proxy headers BEFORE they reach the proxy
-// This prevents OpenClaw gateway from detecting "untrusted proxy" and requiring device pairing
-function stripProxyHeaders(req, res, next) {
-  // Remove all proxy-related headers that Railway might add
-  delete req.headers["x-forwarded-for"];
-  delete req.headers["x-forwarded-host"];
-  delete req.headers["x-forwarded-proto"];
-  delete req.headers["x-real-ip"];
-  delete req.headers["forwarded"];
-  delete req.headers["x-railway"]; // Railway-specific header
-  delete req.headers["x-railway-request-id"];
-  delete req.headers["x-vercel-id"]; // If proxied through Vercel
-  delete req.headers["x-vercel-ip-country"];
-  delete req.headers["cf-connecting-ip"]; // Cloudflare
-  delete req.headers["cf-ray"];
-  delete req.headers["cf-ipcountry"];
-
-  // Override Host header to appear local
-  // OpenClaw treats loopback connections with non-local Host headers as remote
-  // This causes "pairing required" errors even when allowInsecureAuth is true
-  req.headers["host"] = `localhost:${INTERNAL_GATEWAY_PORT}`;
-
-  // Override Origin header to appear local for WebSocket connections
-  // OpenClaw validates the Origin header and rejects non-local origins
-  // This causes "origin not allowed" errors
-  if (req.headers["origin"]) {
-    req.headers["origin"] = `http://localhost:${INTERNAL_GATEWAY_PORT}`;
-  }
-  next();
-}
-
-app.use(stripProxyHeaders, async (req, res) => {
+app.use(async (req, res) => {
   // If not configured, force users to /setup for any non-setup routes.
   if (!isConfigured() && !req.path.startsWith("/setup")) {
     return res.redirect("/setup");
   }
 
-  if (isConfigured()) {
+  // Only start gateway if configured AND onboarding is not in progress
+  // The onboardingInProgress flag prevents race conditions during config changes
+  if (isConfigured() && !onboardingInProgress) {
     try {
       await ensureGatewayRunning();
     } catch (err) {
@@ -1125,36 +1395,16 @@ server.on("upgrade", async (req, socket, head) => {
     socket.destroy();
     return;
   }
+  // Don't try to start gateway during onboarding (prevents race conditions)
+  if (onboardingInProgress) {
+    socket.destroy();
+    return;
+  }
   try {
     await ensureGatewayRunning();
   } catch {
     socket.destroy();
     return;
-  }
-
-  // Strip Railway proxy headers from WebSocket upgrade requests
-  // This prevents "pairing required" and "origin not allowed" errors
-  delete req.headers["x-forwarded-for"];
-  delete req.headers["x-forwarded-host"];
-  delete req.headers["x-forwarded-proto"];
-  delete req.headers["x-real-ip"];
-  delete req.headers["forwarded"];
-  delete req.headers["x-railway"];
-  delete req.headers["x-railway-request-id"];
-  delete req.headers["x-vercel-id"];
-  delete req.headers["x-vercel-ip-country"];
-  delete req.headers["cf-connecting-ip"];
-  delete req.headers["cf-ray"];
-  delete req.headers["cf-ipcountry"];
-
-  // Override Host header to appear local
-  // OpenClaw treats loopback connections with non-local Host headers as remote
-  req.headers["host"] = `localhost:${INTERNAL_GATEWAY_PORT}`;
-
-  // Override Origin header to appear local
-  // OpenClaw validates the Origin header and rejects non-local origins
-  if (req.headers["origin"]) {
-    req.headers["origin"] = `http://localhost:${INTERNAL_GATEWAY_PORT}`;
   }
 
   // Proxy WebSocket upgrade (auth token injected via proxyReqWs event)

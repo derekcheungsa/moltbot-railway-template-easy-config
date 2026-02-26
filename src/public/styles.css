@@ -805,6 +805,22 @@ pre {
   }
 }
 
+/* ===================================
+   Refresh Button Spin Animation
+   =================================== */
+.spinning {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 .next-steps {
   text-align: left;
   margin: var(--space-xl) 0;

@@ -495,6 +495,48 @@
       <button id="reset-from-banner" class="link-button">Reset</button>
     </div>
 
+    <!-- Pending Pairing Requests (shown when OpenClaw is configured) -->
+    <div id="pairing-requests-section" class="card" hidden style="margin-bottom: 2rem;">
+      <div style="display: flex; align-items: center; justify-content: space-between;">
+        <h2 style="display: flex; align-items: center; gap: 0.5rem; margin: 0;">
+          <svg class="channel-icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" style="width: 24px; height: 24px;">
+            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69a.2.2 0 0 0-.05-.18c-.06-.05-.14-.03-.21-.02-.09.02-1.49.95-4.22 2.79-.4.27-.76.41-1.08.4-.36-.01-1.04-.2-1.55-.37-.63-.2-1.12-.31-1.08-.66.02-.18.27-.36.74-.55 2.92-1.27 4.86-2.11 5.83-2.51 2.78-1.16 3.35-1.36 3.73-1.36.08 0 .27.02.39.12.1.08.13.19.14.27-.01.06.01.24 0 .38z"/>
+          </svg>
+          Pending Pairing Requests
+        </h2>
+        <button id="pairing-refresh-btn" class="btn-secondary" style="padding: 0.5rem 1rem; font-size: 0.875rem;">
+          <svg style="width: 16px; height: 16px; vertical-align: middle; margin-right: 0.25rem;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <polyline points="23 4 23 10 17 10"></polyline>
+            <polyline points="1 20 1 14 7 14"></polyline>
+            <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+          </svg>
+          Refresh
+        </button>
+      </div>
+      <p class="muted">Approve Telegram, Discord, or Slack accounts waiting to connect.</p>
+
+      <div id="pairing-loading" class="muted" style="text-align: center; padding: 2rem;">
+        Loading pending requests...
+      </div>
+
+      <div id="pairing-empty" class="info-box" hidden>
+        <svg class="info-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+          <circle cx="12" cy="12" r="10"></circle>
+          <line x1="12" y1="16" x2="12" y2="12"></line>
+          <line x1="12" y1="8" x2="12.01" y2="8"></line>
+        </svg>
+        <div>
+          <strong>No pending requests</strong>
+          <p class="muted">Use your bot's <code>/start</code> command to generate a pairing code, then approve it here.</p>
+          <p class="muted" style="margin-top: 0.5rem;"><small>This list auto-refreshes every 30 seconds.</small></p>
+        </div>
+      </div>
+
+      <div id="pairing-list"></div>
+
+      <div id="pairing-error" class="error-message" hidden></div>
+    </div>
+
     <!-- Navigation Footer -->
     <div class="nav-footer" role="navigation" aria-label="Wizard navigation">
       <button id="nav-back" class="btn-secondary" disabled>

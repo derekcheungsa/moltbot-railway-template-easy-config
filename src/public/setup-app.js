@@ -12,6 +12,7 @@
     isConfigured: false,
     authGroups: [],
     atlasModels: [],
+    pairingRefreshTimer: null,
     formData: {
       authGroup: '',
       authChoice: '',
@@ -162,6 +163,13 @@
     els.statusText = $('#status-text');
     els.step1Next = $('#step1-next');
     els.accordionHeaders = document.querySelectorAll('.accordion-header');
+    // Pairing requests elements
+    els.pairingRequestsSection = $('#pairing-requests-section');
+    els.pairingRefreshBtn = $('#pairing-refresh-btn');
+    els.pairingLoading = $('#pairing-loading');
+    els.pairingEmpty = $('#pairing-empty');
+    els.pairingList = $('#pairing-list');
+    els.pairingError = $('#pairing-error');
   }
 
   // ===================================
@@ -653,6 +661,8 @@
 
       if (j.configured && els.configuredBanner) {
         showElement(els.configuredBanner);
+        // Load pending pairing requests when configured
+        refreshPairingRequests();
       }
 
       renderAuth(j.authGroups || []);
@@ -669,6 +679,120 @@
       }
     });
   }
+
+  function refreshPairingRequests() {
+    if (!els.pairingRequestsSection) return;
+
+    // Clear any existing auto-refresh timer
+    if (state.pairingRefreshTimer) {
+      clearTimeout(state.pairingRefreshTimer);
+      state.pairingRefreshTimer = null;
+    }
+
+    // Add spinning animation to refresh button
+    if (els.pairingRefreshBtn) {
+      var svg = els.pairingRefreshBtn.querySelector('svg');
+      if (svg) svg.classList.add('spinning');
+    }
+
+    // Show the section and loading state
+    showElement(els.pairingRequestsSection);
+    if (els.pairingLoading) showElement(els.pairingLoading);
+    if (els.pairingEmpty) hideElement(els.pairingEmpty);
+    if (els.pairingList) els.pairingList.innerHTML = '';
+    if (els.pairingError) hideElement(els.pairingError);
+
+    httpJson('/setup/api/pairing/list').then(function (j) {
+      if (els.pairingLoading) hideElement(els.pairingLoading);
+
+      // Remove spinning animation
+      if (els.pairingRefreshBtn) {
+        var svg = els.pairingRefreshBtn.querySelector('svg');
+        if (svg) svg.classList.remove('spinning');
+      }
+
+      if (!j.ok) {
+        if (els.pairingError) {
+          els.pairingError.textContent = 'Failed to load pairing requests';
+          showElement(els.pairingError);
+        }
+        // Retry on error after 30 seconds
+        state.pairingRefreshTimer = setTimeout(refreshPairingRequests, 30000);
+        return;
+      }
+
+      if (!j.requests || j.requests.length === 0) {
+        if (els.pairingEmpty) showElement(els.pairingEmpty);
+        // Auto-refresh when empty - user might be generating a code right now
+        state.pairingRefreshTimer = setTimeout(refreshPairingRequests, 30000);
+        return;
+      }
+
+      // Has pending requests - no auto-refresh, let user approve manually
+      // Render each request as a card
+      if (els.pairingList) {
+        els.pairingList.innerHTML = j.requests.map(function (req) {
+          var date = new Date(req.timestamp);
+          var timeStr = date.toLocaleString();
+          return '<div class="review-section" style="margin-bottom: 1rem;">' +
+            '<div class="review-item">' +
+              '<span class="review-label">User ID:</span>' +
+              '<span class="review-value">' + escapeHtml(req.userId) + '</span>' +
+            '</div>' +
+            '<div class="review-item">' +
+              '<span class="review-label">Requested:</span>' +
+              '<span class="review-value">' + escapeHtml(timeStr) + '</span>' +
+            '</div>' +
+            '<div class="review-item">' +
+              '<span class="review-label">Code:</span>' +
+              '<span class="review-value" style="font-family: monospace;">' + escapeHtml(req.code) + '</span>' +
+            '</div>' +
+            '<button class="btn-primary" style="margin-top: 0.5rem;" onclick="approvePairingRequest(\'telegram\', \'' + escapeHtml(req.code) + '\')">Approve</button>' +
+          '</div>';
+        }).join('');
+      }
+    }).catch(function (e) {
+      if (els.pairingLoading) hideElement(els.pairingLoading);
+
+      // Remove spinning animation
+      if (els.pairingRefreshBtn) {
+        var svg = els.pairingRefreshBtn.querySelector('svg');
+        if (svg) svg.classList.remove('spinning');
+      }
+
+      if (els.pairingError) {
+        els.pairingError.textContent = 'Error: ' + String(e);
+        showElement(els.pairingError);
+      }
+      // Retry on error after 30 seconds
+      state.pairingRefreshTimer = setTimeout(refreshPairingRequests, 30000);
+    });
+  }
+
+  function escapeHtml(text) {
+    if (!text) return '';
+    var div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+  }
+
+  // Global function for approve button clicks
+  window.approvePairingRequest = function (channel, code) {
+    httpJson('/setup/api/pairing/approve', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ channel: channel, code: code })
+    }).then(function (j) {
+      if (j.ok) {
+        // Refresh the list after approval
+        refreshPairingRequests();
+      } else {
+        alert('Failed to approve: ' + (j.output || j.error || 'Unknown error'));
+      }
+    }).catch(function (e) {
+      alert('Error approving request: ' + String(e));
+    });
+  };
 
   function runOnboarding() {
     saveFormData();
@@ -788,6 +912,7 @@
     var resetFromBannerBtn = $('#reset-from-banner');
     var retryBtn = $('#retry-setup');
     var resetSetupBtn = $('#reset-setup');
+    var pairingRefreshBtn = $('#pairing-refresh-btn');
 
     if (resetBtn) {
       resetBtn.onclick = handleReset;
@@ -805,6 +930,12 @@
 
     if (resetSetupBtn) {
       resetSetupBtn.onclick = handleReset;
+    }
+
+    if (pairingRefreshBtn) {
+      pairingRefreshBtn.onclick = function () {
+        refreshPairingRequests();
+      };
     }
   }
 

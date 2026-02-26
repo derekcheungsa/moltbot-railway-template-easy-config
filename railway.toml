@@ -24,6 +24,13 @@ PORT = "8080"
 # Leave as-is if not using Google Workspace features
 GOOGLE_CLIENT_SECRET_BASE64 = "Replace_Me"
 
+# Optional: gog CLI configuration for persistent authentication in containers
+# These are required for Google Workspace features to work across container restarts
+# GOG_KEYRING_PASSWORD must be set to a secure password for encrypted token storage
+GOG_KEYRING_BACKEND = "file"
+GOG_KEYRING_PASSWORD = "Replace_With_Secure_Password"
+GOG_CONFIG_DIR = "/data/.gog-config"
+
 # Optional: Health Portal credentials for auto-syncing appointments
 # Configure these in Railway to enable automatic health portal sync
 # Leave as-is if not using health portal integration

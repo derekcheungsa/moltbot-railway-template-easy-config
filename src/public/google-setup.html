@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Google Workspace Setup - OpenClaw</title>
+  <link rel="stylesheet" href="/setup/styles.css">
+</head>
+<body>
+  <div class="container">
+    <h1>🎮 Google Workspace Setup</h1>
+    <p class="subtitle">Configure gog CLI for Gmail, Calendar, Drive, and more</p>
+
+    <div id="status-section" class="card">
+      <h2>Current Status</h2>
+      <p>Checking...</p>
+    </div>
+
+    <div id="setup-section" class="card" style="display: none;">
+      <h2>Authenticate Your Google Account</h2>
+
+      <form id="auth-form">
+        <div class="form-group">
+          <label for="email">Google Account Email</label>
+          <input type="email" id="email" name="email" required placeholder="your@gmail.com">
+        </div>
+
+        <div class="form-group">
+          <label for="services">Services to Enable</label>
+          <select id="services" name="services" multiple>
+            <option value="gmail" selected>Gmail</option>
+            <option value="calendar">Calendar</option>
+            <option value="drive">Drive</option>
+            <option value="contacts">Contacts</option>
+            <option value="sheets">Sheets</option>
+            <option value="docs">Docs</option>
+          </select>
+          <small>Hold Ctrl/Cmd to select multiple services</small>
+        </div>
+
+        <button type="submit" id="get-url-btn" class="btn btn-primary">
+          Generate Authorization Link
+        </button>
+      </form>
+    </div>
+
+    <div id="auth-url-section" class="card" style="display: none;">
+      <h2>Step 1: Open Authorization Link</h2>
+      <p>Click the button below to open Google's authorization page in a new tab:</p>
+
+      <a id="auth-link" href="#" target="_blank" class="btn btn-primary">
+        Open Google Authorization Page
+      </a>
+
+      <p><strong>After approving access</strong>, Google will redirect you to a page that shows an error (ERR_CONNECTION_REFUSED). This is expected!</p>
+      <p>Copy the full URL from your browser's address bar and paste it below.</p>
+    </div>
+
+    <div id="callback-section" class="card" style="display: none;">
+      <h2>Step 2: Paste Callback URL</h2>
+      <p>Paste the full redirect URL from your browser:</p>
+
+      <form id="callback-form">
+        <div class="form-group">
+          <input type="url" id="callback-url" name="callback-url" required
+                 placeholder="http://127.0.0.1:8080/?code=4/0A...&scope=..."
+                 style="width: 100%; min-width: 400px;">
+        </div>
+
+        <button type="submit" id="submit-callback-btn" class="btn btn-primary">
+          Complete Authentication
+        </button>
+      </form>
+    </div>
+
+    <div id="success-section" class="card" style="display: none;">
+      <h2>✅ Authentication Complete!</h2>
+      <p>Your Google account has been successfully authenticated.</p>
+      <p>You can now use Google Workspace features through OpenClaw.</p>
+
+      <div id="account-info"></div>
+
+      <a href="/setup" class="btn btn-secondary">Back to Setup</a>
+    </div>
+
+    <div id="error-section" class="card error" style="display: none;">
+      <h2>❌ Error</h2>
+      <p id="error-message"></p>
+      <button id="retry-btn" class="btn btn-secondary">Try Again</button>
+    </div>
+  </div>
+
+  <script>
+    const state = {
+      email: '',
+      services: []
+    };
+
+    // Check current status on load
+    async function checkStatus() {
+      const statusSection = document.getElementById('status-section');
+      const setupSection = document.getElementById('setup-section');
+
+      try {
+        const res = await fetch('/setup/api/google/status');
+        const data = await res.json();
+
+        if (data.hasAccounts) {
+          statusSection.innerHTML = `
+            <h2>✅ Already Configured</h2>
+            <p><strong>Authenticated accounts:</strong></p>
+            <ul>${data.accounts.map(a => `<li>${a.email} (${a.services.join(', ')})</li>`).join('')}</ul>
+          `;
+          setupSection.style.display = 'none';
+        } else if (data.hasCredentials) {
+          statusSection.innerHTML = `
+            <h2>📋 Ready to Authenticate</h2>
+            <p>Google credentials are configured. Complete the authentication below.</p>
+          `;
+          setupSection.style.display = 'block';
+        } else {
+          statusSection.innerHTML = `
+            <h2>⚠️ Credentials Not Found</h2>
+            <p>Please set <code>GOOGLE_CLIENT_SECRET_BASE64</code> in Railway variables first.</p>
+          `;
+          setupSection.style.display = 'none';
+        }
+      } catch (err) {
+        statusSection.innerHTML = `<p class="error">Error checking status: ${err.message}</p>`;
+        setupSection.style.display = 'none';
+      }
+    }
+
+    // Generate auth URL
+    document.getElementById('auth-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const email = document.getElementById('email').value;
+      const servicesSelect = document.getElementById('services');
+      const services = Array.from(servicesSelect.selectedOptions).map(o => o.value).join(',');
+
+      state.email = email;
+      state.services = services;
+
+      const btn = document.getElementById('get-url-btn');
+      btn.disabled = true;
+      btn.textContent = 'Generating...';
+
+      try {
+        const res = await fetch('/setup/api/google/auth-url', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, services })
+        });
+
+        const data = await res.json();
+
+        if (!data.ok) {
+          throw new Error(data.error || 'Failed to generate auth URL');
+        }
+
+        document.getElementById('auth-link').href = data.authUrl;
+        document.getElementById('auth-url-section').style.display = 'block';
+        document.getElementById('callback-section').style.display = 'block';
+        document.getElementById('setup-section').style.display = 'none';
+
+        // Scroll to auth URL section
+        document.getElementById('auth-url-section').scrollIntoView({ behavior: 'smooth' });
+      } catch (err) {
+        showError(err.message);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Generate Authorization Link';
+      }
+    });
+
+    // Submit callback URL
+    document.getElementById('callback-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const callbackUrl = document.getElementById('callback-url').value;
+
+      const btn = document.getElementById('submit-callback-btn');
+      btn.disabled = true;
+      btn.textContent = 'Authenticating...';
+
+      try {
+        const res = await fetch('/setup/api/google/callback', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            email: state.email,
+            services: state.services,
+            callbackUrl
+          })
+        });
+
+        const data = await res.json();
+
+        if (!data.ok) {
+          throw new Error(data.error || 'Authentication failed');
+        }
+
+        // Show success
+        document.getElementById('callback-section').style.display = 'none';
+        document.getElementById('auth-url-section').style.display = 'none';
+        document.getElementById('success-section').style.display = 'block';
+        document.getElementById('account-info').innerHTML = `
+          <p><strong>Account:</strong> ${state.email}</p>
+          <p><strong>Services:</strong> ${state.services}</p>
+        `;
+
+        // Scroll to success section
+        document.getElementById('success-section').scrollIntoView({ behavior: 'smooth' });
+      } catch (err) {
+        showError(err.message);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Complete Authentication';
+      }
+    });
+
+    function showError(message) {
+      document.getElementById('error-message').textContent = message;
+      document.getElementById('error-section').style.display = 'block';
+      document.getElementById('error-section').scrollIntoView({ behavior: 'smooth' });
+    }
+
+    document.getElementById('retry-btn').addEventListener('click', () => {
+      document.getElementById('error-section').style.display = 'none';
+      location.reload();
+    });
+
+    // Initialize
+    checkStatus();
+  </script>
+</body>
+</html>
