@@ -68,12 +68,13 @@ RUN useradd -m -s /bin/bash linuxbrew \
 USER linuxbrew
 RUN NONINTERACTIVE=1 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 
+# Install gog CLI for Google Workspace skill (Gmail, Calendar, Drive, etc.)
+# Must run as linuxbrew user before chown to root
+RUN /home/linuxbrew/.linuxbrew/bin/brew install steipete/tap/gogcli
+
 USER root
 RUN chown -R root:root /home/linuxbrew/.linuxbrew
 ENV PATH="/home/linuxbrew/.linuxbrew/bin:/home/linuxbrew/.linuxbrew/sbin:${PATH}"
-
-# Install gog CLI for Google Workspace skill (Gmail, Calendar, Drive, etc.)
-RUN brew install steipete/tap/gogcli
 
 WORKDIR /app
 
