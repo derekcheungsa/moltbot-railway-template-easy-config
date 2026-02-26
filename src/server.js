@@ -66,6 +66,7 @@ function isConfigured() {
 
 let gatewayProc = null;
 let gatewayStarting = null;
+let onboardingInProgress = false; // Prevents middleware from starting gateway during onboarding
 
 function sleep(ms) {
   return new Promise((r) => setTimeout(r, ms));
@@ -662,6 +663,9 @@ function runCmd(cmd, args, opts = {}, extraEnv = {}) {
 }
 
 app.post("/setup/api/run", requireSetupAuth, async (req, res) => {
+  // Set flag to prevent middleware from starting gateway during onboarding
+  onboardingInProgress = true;
+
   try {
     if (isConfigured()) {
       await ensureGatewayRunning();
@@ -1011,6 +1015,9 @@ app.post("/setup/api/run", requireSetupAuth, async (req, res) => {
     return res
       .status(500)
       .json({ ok: false, output: `Internal error: ${String(err)}` });
+  } finally {
+    // Always clear the flag, even on error
+    onboardingInProgress = false;
   }
 });
 
@@ -1148,7 +1155,9 @@ app.use(async (req, res) => {
     return res.redirect("/setup");
   }
 
-  if (isConfigured()) {
+  // Only start gateway if configured AND onboarding is not in progress
+  // The onboardingInProgress flag prevents race conditions during config changes
+  if (isConfigured() && !onboardingInProgress) {
     try {
       await ensureGatewayRunning();
     } catch (err) {
@@ -1173,6 +1182,11 @@ const server = app.listen(PORT, () => {
 // Handle WebSocket upgrades
 server.on("upgrade", async (req, socket, head) => {
   if (!isConfigured()) {
+    socket.destroy();
+    return;
+  }
+  // Don't try to start gateway during onboarding (prevents race conditions)
+  if (onboardingInProgress) {
     socket.destroy();
     return;
   }
