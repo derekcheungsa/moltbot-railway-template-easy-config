@@ -168,12 +168,52 @@ For the gog CLI to work properly in Railway's container environment, you also ne
 
 The `client_secret.json` file is now in place, but you still need to authorize your Google account. This is a one-time setup that stores an OAuth refresh token.
 
-### Open Railway Shell
+**Choose your method:**
+
+- **Method A: Browser-Based** ⭐ (Recommended - No shell access required)
+- **Method B: Railway Shell** (Alternative - Requires shell access)
+
+---
+
+### Method A: Browser-Based Authentication (Recommended)
+
+This method uses a web interface and requires no shell access.
+
+1. Visit the Google setup page:
+   ```
+   https://your-project.up.railway.app/setup/google
+   ```
+
+2. Enter your Google account email
+
+3. Select the services you want to enable (Gmail, Calendar, Drive, etc.)
+
+4. Click **"Generate Authorization Link"**
+
+5. Click the authorization link to open Google's OAuth page in a new tab
+
+6. Sign in to Google and click **"Allow"** to grant access
+
+7. After approving, Google will redirect to a page showing **ERR_CONNECTION_REFUSED** — this is expected!
+
+8. Copy the **full URL** from your browser's address bar (it starts with `http://127.0.0.1...`)
+
+9. Paste the URL into the form on the setup page and click **"Complete Authentication"**
+
+10. You should see a success message confirming your account is authenticated
+
+---
+
+### Method B: Railway Shell (Alternative)
+
+If you have Railway Shell access, you can use the command-line method:
+
+#### Open Railway Shell
 
 1. Go to your Railway service
 2. Click the **Shell** tab to open a terminal in your container
 
-### Run the Authentication Commands
+#### Run the Authentication Commands
 
 ```bash
 # 1. Tell gog where to find the OAuth client credentials
@@ -183,7 +223,7 @@ gog auth credentials /data/.openclaw/credentials/client_secret.json
 gog auth add your@gmail.com --services gmail --manual
 ```
 
-### Manual OAuth Flow
+#### Manual OAuth Flow
 
 The `--manual` flag will:
 1. Print an authorization URL in the terminal
@@ -200,7 +240,7 @@ Enter the full redirect URL: http://127.0.0.1:8080/?code=4/0A...
 ✅ Authorized: you@gmail.com
 ```
 
-### Verify Authentication
+#### Verify Authentication
 
 ```bash
 # Check authenticated accounts
@@ -250,9 +290,14 @@ Once authenticated, you can test the gog skill via the OpenClaw Control UI or yo
 
 **Solution:** This means the `gog` CLI is installed but you haven't authenticated your Google account yet.
 
+**Use the browser-based method (recommended):**
+1. Visit `https://your-project.up.railway.app/setup/google`
+2. Follow the steps to authenticate your Google account
+
+**Or use Railway Shell:**
 1. Open Railway Shell
 2. Run `gog auth list` - should show "No accounts found"
-3. Run the authentication commands from **Step 8**:
+3. Run the authentication commands from **Step 8, Method B**:
    ```bash
    gog auth credentials /data/.openclaw/credentials/client_secret.json
    gog auth add your@gmail.com --services gmail --manual

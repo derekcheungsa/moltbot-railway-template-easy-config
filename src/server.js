@@ -400,6 +400,10 @@ app.get("/setup", requireSetupAuth, (_req, res) => {
   res.sendFile(path.join(process.cwd(), "src", "public", "setup.html"));
 });
 
+app.get("/setup/google", requireSetupAuth, (_req, res) => {
+  res.sendFile(path.join(process.cwd(), "src", "public", "google-setup.html"));
+});
+
 app.get("/setup/api/status", requireSetupAuth, async (_req, res) => {
   // Run version and channels help commands in parallel for faster response
   const [version, channelsHelp] = await Promise.all([
@@ -1099,6 +1103,126 @@ app.post("/setup/api/pairing/approve", requireSetupAuth, async (req, res) => {
   return res
     .status(r.code === 0 ? 200 : 500)
     .json({ ok: r.code === 0, output: r.output });
+});
+
+// Google Workspace (gog) OAuth authentication endpoints
+// These allow completing gog authentication without Railway Shell access
+
+app.get("/setup/api/google/status", requireSetupAuth, async (_req, res) => {
+  // Check if gog is installed and configured
+  const gogPath = "/home/linuxbrew/.linuxbrew/bin/gog";
+  const credentialsPath = path.join(STATE_DIR, "credentials", "client_secret.json");
+
+  try {
+    // Check if credentials file exists
+    const hasCredentials = fs.existsSync(credentialsPath);
+
+    // Check for authenticated accounts
+    const accountsResult = await runCmd(
+      gogPath,
+      ["auth", "list", "--json"],
+      {},
+      {
+        GOG_KEYRING_BACKEND: process.env.GOG_KEYRING_BACKEND || "file",
+        GOG_KEYRING_PASSWORD: process.env.GOG_KEYRING_PASSWORD || "",
+        XDG_CONFIG_HOME: process.env.GOG_CONFIG_DIR || "/data/.gog-config",
+      }
+    );
+
+    let accounts = [];
+    if (accountsResult.code === 0 && accountsResult.output) {
+      try {
+        accounts = JSON.parse(accountsResult.output);
+      } catch {
+        // Output not JSON, ignore
+      }
+    }
+
+    res.json({
+      ok: true,
+      hasCredentials,
+      hasAccounts: accounts.length > 0,
+      accounts: accounts.map((a) => ({ email: a.email, services: a.services })),
+    });
+  } catch (err) {
+    res.status(500).json({ ok: false, error: err.message });
+  }
+});
+
+app.post("/setup/api/google/auth-url", requireSetupAuth, async (req, res) => {
+  const { email, services = "gmail" } = req.body || {};
+  if (!email) {
+    return res.status(400).json({ ok: false, error: "Missing email address" });
+  }
+
+  const gogPath = "/home/linuxbrew/.linuxbrew/bin/gog";
+  const credentialsPath = path.join(STATE_DIR, "credentials", "client_secret.json");
+
+  try {
+    // First, ensure gog knows about the credentials
+    await runCmd(gogPath, ["auth", "credentials", credentialsPath], {}, {
+      GOG_KEYRING_BACKEND: process.env.GOG_KEYRING_BACKEND || "file",
+      GOG_KEYRING_PASSWORD: process.env.GOG_KEYRING_PASSWORD || "",
+      XDG_CONFIG_HOME: process.env.GOG_CONFIG_DIR || "/data/.gog-config",
+    });
+
+    // Generate the manual auth URL
+    const result = await runCmd(
+      gogPath,
+      ["auth", "add", String(email), "--services", String(services), "--manual", "--remote", "--step", "1"],
+      {},
+      {
+        GOG_KEYRING_BACKEND: process.env.GOG_KEYRING_BACKEND || "file",
+        GOG_KEYRING_PASSWORD: process.env.GOG_KEYRING_PASSWORD || "",
+        XDG_CONFIG_HOME: process.env.GOG_CONFIG_DIR || "/data/.gog-config",
+      }
+    );
+
+    if (result.code !== 0) {
+      return res.status(500).json({ ok: false, error: result.output });
+    }
+
+    // Extract the auth URL from the output
+    const urlMatch = result.output?.match(/https:\/\/accounts\.google\.com\/o\/oauth2\/auth[^\s]+/);
+    if (!urlMatch) {
+      return res.status(500).json({ ok: false, error: "Could not extract auth URL from gog output", output: result.output });
+    }
+
+    res.json({ ok: true, authUrl: urlMatch[0] });
+  } catch (err) {
+    res.status(500).json({ ok: false, error: err.message });
+  }
+});
+
+app.post("/setup/api/google/callback", requireSetupAuth, async (req, res) => {
+  const { email, callbackUrl, services = "gmail" } = req.body || {};
+  if (!email || !callbackUrl) {
+    return res.status(400).json({ ok: false, error: "Missing email or callbackUrl" });
+  }
+
+  const gogPath = "/home/linuxbrew/.linuxbrew/bin/gog";
+
+  try {
+    // Step 2: Complete the auth with the callback URL
+    const result = await runCmd(
+      gogPath,
+      ["auth", "add", String(email), "--services", String(services), "--remote", "--step", "2", "--auth-url", String(callbackUrl)],
+      {},
+      {
+        GOG_KEYRING_BACKEND: process.env.GOG_KEYRING_BACKEND || "file",
+        GOG_KEYRING_PASSWORD: process.env.GOG_KEYRING_PASSWORD || "",
+        XDG_CONFIG_HOME: process.env.GOG_CONFIG_DIR || "/data/.gog-config",
+      }
+    );
+
+    if (result.code !== 0) {
+      return res.status(500).json({ ok: false, error: result.output });
+    }
+
+    res.json({ ok: true, output: result.output });
+  } catch (err) {
+    res.status(500).json({ ok: false, error: err.message });
+  }
 });
 
 app.post("/setup/api/reset", requireSetupAuth, async (_req, res) => {
