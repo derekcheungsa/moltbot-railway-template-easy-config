@@ -1143,7 +1143,9 @@ app.get("/setup/api/google/status", requireSetupAuth, async (_req, res) => {
 
         if (accountsResult.code === 0 && accountsResult.output) {
           try {
-            accounts = JSON.parse(accountsResult.output);
+            const parsed = JSON.parse(accountsResult.output);
+            // gog returns {accounts: [...]} not an array directly
+            accounts = parsed.accounts || [];
           } catch (parseErr) {
             console.log(`[google-status] Failed to parse gog output as JSON: ${parseErr.message}`);
           }
