@@ -1117,24 +1117,43 @@ app.get("/setup/api/google/status", requireSetupAuth, async (_req, res) => {
     // Check if credentials file exists
     const hasCredentials = fs.existsSync(credentialsPath);
 
-    // Check for authenticated accounts
-    const accountsResult = await runCmd(
-      gogPath,
-      ["auth", "list", "--json"],
-      {},
-      {
-        GOG_KEYRING_BACKEND: process.env.GOG_KEYRING_BACKEND || "file",
-        GOG_KEYRING_PASSWORD: process.env.GOG_KEYRING_PASSWORD || "",
-        XDG_CONFIG_HOME: process.env.GOG_CONFIG_DIR || "/data/.gog-config",
-      }
-    );
+    console.log(`[google-status] Credentials file exists: ${hasCredentials} at ${credentialsPath}`);
 
+    // Check for authenticated accounts (only if credentials exist)
     let accounts = [];
-    if (accountsResult.code === 0 && accountsResult.output) {
+    let gogError = null;
+
+    if (hasCredentials) {
       try {
-        accounts = JSON.parse(accountsResult.output);
-      } catch {
-        // Output not JSON, ignore
+        const accountsResult = await runCmd(
+          gogPath,
+          ["auth", "list", "--json"],
+          {},
+          {
+            GOG_KEYRING_BACKEND: process.env.GOG_KEYRING_BACKEND || "file",
+            GOG_KEYRING_PASSWORD: process.env.GOG_KEYRING_PASSWORD || "",
+            XDG_CONFIG_HOME: process.env.GOG_CONFIG_DIR || "/data/.gog-config",
+          }
+        );
+
+        console.log(`[google-status] gog auth list result: code=${accountsResult.code}`);
+        if (accountsResult.output) {
+          console.log(`[google-status] gog output: ${accountsResult.output.slice(0, 200)}`);
+        }
+
+        if (accountsResult.code === 0 && accountsResult.output) {
+          try {
+            accounts = JSON.parse(accountsResult.output);
+          } catch (parseErr) {
+            console.log(`[google-status] Failed to parse gog output as JSON: ${parseErr.message}`);
+          }
+        } else if (accountsResult.code !== 0) {
+          gogError = accountsResult.output || "gog command failed";
+          console.log(`[google-status] gog command error: ${gogError}`);
+        }
+      } catch (cmdErr) {
+        gogError = cmdErr.message;
+        console.log(`[google-status] Failed to run gog command: ${gogError}`);
       }
     }
 
@@ -1143,8 +1162,10 @@ app.get("/setup/api/google/status", requireSetupAuth, async (_req, res) => {
       hasCredentials,
       hasAccounts: accounts.length > 0,
       accounts: accounts.map((a) => ({ email: a.email, services: a.services })),
+      gogError,
     });
   } catch (err) {
+    console.log(`[google-status] Unexpected error: ${err.message}`);
     res.status(500).json({ ok: false, error: err.message });
   }
 });
