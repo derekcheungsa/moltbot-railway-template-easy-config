@@ -1,36 +1,36 @@
 /* ===================================
-   CSS Custom Properties — Gumroad Clean Theme
+   CSS Custom Properties — Professional Neutral Theme
    =================================== */
 :root {
-  /* Colors — Clean, warm palette */
-  --bg-primary: #f4f4f0;
+  /* Colors — Neutral, professional palette */
+  --bg-primary: #f5f6f7;
   --bg-secondary: #ffffff;
-  --bg-tertiary: #f9f9f7;
-  --bg-hover: #eeeeea;
-  --text-primary: #000000;
-  --text-secondary: #333333;
-  --text-muted: #666666;
-  --border-color: rgba(0, 0, 0, 0.5);
-  --border-light: rgba(0, 0, 0, 0.12);
+  --bg-tertiary: #f8f9fa;
+  --bg-hover: #edf0f2;
+  --text-primary: #1a1a1a;
+  --text-secondary: #3d3d3d;
+  --text-muted: #6b7280;
+  --border-color: #d1d5db;
+  --border-light: #e5e7eb;
 
-  /* Accent — Gumroad pink */
-  --accent-primary: #ff90e8;
-  --accent-hover: #ff6bd6;
-  --accent-focus: rgba(255, 144, 232, 0.25);
+  /* Accent — Professional blue */
+  --accent-primary: #2563eb;
+  --accent-hover: #1d4ed8;
+  --accent-focus: rgba(37, 99, 235, 0.2);
 
   /* Semantic Colors */
-  --success: #23a094;
-  --success-bg: rgba(35, 160, 148, 0.08);
-  --warning: #f1c40f;
-  --warning-bg: rgba(241, 196, 15, 0.08);
-  --error: #dc3545;
-  --error-bg: rgba(220, 53, 69, 0.08);
-  --info: #0d6efd;
-  --info-bg: rgba(13, 110, 253, 0.06);
+  --success: #059669;
+  --success-bg: rgba(5, 150, 105, 0.06);
+  --warning: #d97706;
+  --warning-bg: rgba(217, 119, 6, 0.06);
+  --error: #dc2626;
+  --error-bg: rgba(220, 38, 38, 0.06);
+  --info: #2563eb;
+  --info-bg: rgba(37, 99, 235, 0.06);
 
   /* Typography */
-  --font-sans: "ABC Favorit", Avenir, Montserrat, Corbel, "URW Gothic", source-sans-pro, sans-serif;
-  --font-mono: ui-monospace, "SF Mono", "Consolas", monospace;
+  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", "Consolas", "Liberation Mono", monospace;
 
   /* Spacing Scale (rem) */
   --space-xs: 0.25rem;
@@ -40,11 +40,11 @@
   --space-xl: 2rem;
   --space-2xl: 3rem;
 
-  /* Border Radius — Rounded */
-  --radius-sm: 8px;
-  --radius-md: 16px;
-  --radius-lg: 24px;
-  --radius-xl: 24px;
+  /* Border Radius */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 14px;
   --radius-full: 9999px;
 
   /* Transitions */
@@ -120,8 +120,8 @@ body {
 }
 
 .step-item.active .step-circle {
-  background: var(--text-primary);
-  border-color: var(--text-primary);
+  background: var(--accent-primary);
+  border-color: var(--accent-primary);
   color: #ffffff;
 }
 
@@ -159,7 +159,7 @@ body {
 }
 
 .step-item.active .step-label {
-  color: var(--text-primary);
+  color: var(--accent-primary);
   font-weight: 600;
 }
 
@@ -277,7 +277,7 @@ p {
   height: 64px;
   align-items: center;
   justify-content: center;
-  background: var(--text-primary);
+  background: var(--accent-primary);
   border-radius: var(--radius-md);
   color: #ffffff;
   margin-bottom: var(--space-md);
@@ -382,7 +382,7 @@ label {
 .badge {
   display: inline-block;
   padding: 2px 10px;
-  background: var(--text-primary);
+  background: var(--accent-primary);
   color: #ffffff;
   font-size: 0.65rem;
   font-weight: 600;
@@ -752,12 +752,12 @@ select {
 pre {
   white-space: pre-wrap;
   word-wrap: break-word;
-  background: var(--text-primary);
+  background: #1e293b;
   border: 1px solid var(--border-color);
   border-radius: var(--radius-md);
   padding: var(--space-md);
   margin: 0;
-  color: #a0ffa0;
+  color: #e2e8f0;
   font-family: var(--font-mono);
   font-size: 0.85rem;
   line-height: 1.5;
@@ -852,7 +852,7 @@ pre {
   flex-shrink: 0;
   width: 36px;
   height: 36px;
-  background: var(--text-primary);
+  background: var(--accent-primary);
   color: #ffffff;
   border-radius: var(--radius-full);
   display: flex;
@@ -980,14 +980,14 @@ pre {
    Buttons
    =================================== */
 button {
-  padding: 0.75rem 1.5rem;
-  border-radius: var(--radius-full);
-  border: 1px solid var(--text-primary);
-  background: var(--text-primary);
+  padding: 0.625rem 1.25rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--accent-primary);
+  background: var(--accent-primary);
   color: #ffffff;
   font-family: var(--font-sans);
-  font-weight: 600;
-  font-size: 0.95rem;
+  font-weight: 500;
+  font-size: 0.9rem;
   cursor: pointer;
   transition: all var(--transition-base);
   display: inline-flex;
@@ -997,8 +997,8 @@ button {
 }
 
 button:hover:not(:disabled) {
-  background: var(--text-secondary);
-  border-color: var(--text-secondary);
+  background: var(--accent-hover);
+  border-color: var(--accent-hover);
 }
 
 button:active:not(:disabled) {
@@ -1021,9 +1021,9 @@ button:focus-visible {
 }
 
 .btn-primary {
-  background: var(--text-primary);
+  background: var(--accent-primary);
   color: #ffffff;
-  border-color: var(--text-primary);
+  border-color: var(--accent-primary);
 }
 
 .btn-secondary {
