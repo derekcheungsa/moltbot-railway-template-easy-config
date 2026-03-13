@@ -49,6 +49,159 @@ function clawArgs(args) {
   return [OPENCLAW_ENTRY, ...args];
 }
 
+// Agent metadata file (dashboard-specific fields not stored in openclaw.json)
+const AGENT_META_PATH = path.join(STATE_DIR, "agent-meta.json");
+
+// Skills directory (each skill is a folder with SKILL.md + optional scripts/references/assets)
+const SKILLS_DIR = path.join(WORKSPACE_DIR, "skills");
+
+function readAgentMeta() {
+  try {
+    return JSON.parse(fs.readFileSync(AGENT_META_PATH, "utf8"));
+  } catch {
+    return {};
+  }
+}
+
+function writeAgentMeta(meta) {
+  fs.mkdirSync(STATE_DIR, { recursive: true });
+  fs.writeFileSync(AGENT_META_PATH, JSON.stringify(meta, null, 2), "utf8");
+}
+
+function parseSkillFrontmatter(content) {
+  const match = content.match(/^---\n([\s\S]*?)\n---/);
+  if (!match) return {};
+  const meta = {};
+  for (const line of match[1].split("\n")) {
+    const idx = line.indexOf(":");
+    if (idx > 0) {
+      const key = line.slice(0, idx).trim();
+      const val = line.slice(idx + 1).trim();
+      meta[key] = val;
+    }
+  }
+  return meta;
+}
+
+// Persona templates for quick agent personality configuration
+const PERSONA_TEMPLATES = [
+  {
+    id: "support-friendly",
+    name: "Friendly Support Agent",
+    description: "Warm, empathetic support agent that prioritizes user satisfaction and clear communication.",
+    category: "support",
+    soul: `# SOUL - Friendly Support Agent
+
+You are a warm, empathetic support agent. Your primary goal is to help users resolve their issues quickly while making them feel heard and valued.
+
+## Personality
+- Friendly and approachable tone
+- Patient with all skill levels
+- Proactive in offering additional help
+- Celebrate user successes
+
+## Communication Style
+- Use clear, jargon-free language
+- Break complex steps into simple instructions
+- Confirm understanding before moving on
+- End interactions with a helpful follow-up suggestion`,
+    identity: { name: "Support Agent" },
+    model: null,
+  },
+  {
+    id: "developer-focused",
+    name: "Developer Assistant",
+    description: "Technical coding assistant that provides precise, well-documented solutions with best practices.",
+    category: "development",
+    soul: `# SOUL - Developer Assistant
+
+You are a skilled developer assistant focused on writing clean, maintainable code. You follow best practices and explain your reasoning.
+
+## Personality
+- Direct and technically precise
+- Opinionated about code quality
+- Thorough in error handling
+- Security-conscious
+
+## Communication Style
+- Use code examples liberally
+- Reference documentation and standards
+- Explain trade-offs between approaches
+- Flag potential issues proactively`,
+    identity: { name: "Dev Assistant" },
+    model: null,
+  },
+  {
+    id: "creative-writer",
+    name: "Creative Writer",
+    description: "Imaginative writing partner that helps with storytelling, content creation, and creative brainstorming.",
+    category: "creative",
+    soul: `# SOUL - Creative Writer
+
+You are an imaginative creative writing partner. You help users craft compelling narratives, generate ideas, and refine their creative work.
+
+## Personality
+- Enthusiastic about creative expression
+- Encouraging and constructive
+- Rich vocabulary and varied sentence structure
+- Playful but professional
+
+## Communication Style
+- Offer multiple creative options
+- Use vivid language and metaphors
+- Ask thought-provoking questions
+- Build on user ideas rather than replacing them`,
+    identity: { name: "Creative Writer" },
+    model: null,
+  },
+  {
+    id: "data-analyst",
+    name: "Data Analyst",
+    description: "Analytical assistant that excels at interpreting data, finding patterns, and presenting insights clearly.",
+    category: "analytics",
+    soul: `# SOUL - Data Analyst
+
+You are a meticulous data analyst. You help users understand their data, find patterns, and make data-driven decisions.
+
+## Personality
+- Precise and detail-oriented
+- Evidence-based reasoning
+- Clear about assumptions and limitations
+- Pragmatic about methodology
+
+## Communication Style
+- Present findings with supporting evidence
+- Use structured formats (tables, lists)
+- Distinguish correlation from causation
+- Suggest next steps for deeper analysis`,
+    identity: { name: "Data Analyst" },
+    model: null,
+  },
+  {
+    id: "minimalist",
+    name: "Minimalist Assistant",
+    description: "Concise, no-nonsense assistant that delivers maximum value with minimum words.",
+    category: "productivity",
+    soul: `# SOUL - Minimalist Assistant
+
+You are a concise, efficient assistant. You deliver maximum value with minimum words. No fluff, no filler.
+
+## Personality
+- Direct and to the point
+- Efficient with words
+- Action-oriented
+- Respectful of user time
+
+## Communication Style
+- Short, clear responses
+- Bullet points over paragraphs
+- Skip pleasantries unless asked
+- Lead with the answer, then explain if needed`,
+    identity: { name: "Assistant" },
+    model: null,
+  },
+];
+
 function configPath() {
   return (
     process.env.OPENCLAW_CONFIG_PATH?.trim() ||
@@ -382,6 +535,20 @@ const app = express();
 app.disable("x-powered-by");
 app.use(express.json({ limit: "1mb" }));
 
+// CORS middleware for external dashboard access (e.g. OpenClaw Cloud on Lovable)
+app.use("/setup/api", (req, res, next) => {
+  const origin = req.headers.origin;
+  const allowed = (process.env.DASHBOARD_ORIGINS || "").split(",").filter(Boolean);
+  if (origin && allowed.some((a) => origin === a)) {
+    res.set("Access-Control-Allow-Origin", origin);
+    res.set("Access-Control-Allow-Methods", "GET,POST,PUT,DELETE,OPTIONS");
+    res.set("Access-Control-Allow-Headers", "Content-Type,Authorization");
+    res.set("Access-Control-Allow-Credentials", "true");
+  }
+  if (req.method === "OPTIONS") return res.sendStatus(204);
+  next();
+});
+
 // Minimal health endpoint for Railway.
 app.get("/setup/healthz", (_req, res) => res.json({ ok: true }));
 
@@ -541,6 +708,32 @@ app.get("/setup/api/status", requireSetupAuth, async (_req, res) => {
       ],
     },
     {
+      value: "modelscope",
+      label: "ModelScope.ai",
+      hint: "API key",
+      options: [
+        { value: "modelscope-api-key", label: "ModelScope.ai API key" },
+      ],
+      models: [
+        {
+          id: "zai-org/GLM-4.7-Flash",
+          name: "GLM-4.7 Flash (default)",
+          description: "Fast and efficient large language model",
+          contextWindow: 131072,
+          inputPrice: 0.00,
+          outputPrice: 0.00,
+        },
+        {
+          id: "deepseek-ai/DeepSeek-V3.2",
+          name: "DeepSeek V3.2",
+          description: "Latest DeepSeek model with strong reasoning and coding",
+          contextWindow: 163840,
+          inputPrice: 0.00,
+          outputPrice: 0.00,
+        },
+      ],
+    },
+    {
       value: "moonshot",
       label: "Moonshot AI",
       hint: "Kimi K2 + Kimi Code",
@@ -641,6 +834,7 @@ function buildOnboardArgs(payload) {
     // (Atlas Cloud uses OpenAI-compatible API, so map it to openai-api-key)
     const authChoiceMap = {
       "atlas-api-key": "openai-api-key",
+      "modelscope-api-key": "openai-api-key",
     };
     const effectiveAuthChoice = authChoiceMap[payload.authChoice] || payload.authChoice;
     args.push("--auth-choice", effectiveAuthChoice);
@@ -654,6 +848,8 @@ function buildOnboardArgs(payload) {
       "ai-gateway-api-key": "--ai-gateway-api-key",
       // Atlas Cloud uses OpenAI-compatible API, so use --openai-api-key
       "atlas-api-key": "--openai-api-key",
+      // ModelScope.ai uses OpenAI-compatible API, so use --openai-api-key
+      "modelscope-api-key": "--openai-api-key",
       "moonshot-api-key": "--moonshot-api-key",
       "kimi-code-api-key": "--kimi-code-api-key",
       "gemini-api-key": "--gemini-api-key",
@@ -743,6 +939,11 @@ app.post("/setup/api/run", requireSetupAuth, async (req, res) => {
       console.log(`[onboard] Running Atlas Cloud onboarding with OPENAI_BASE_URL=https://api.atlascloud.ai/v1/`);
       onboard = await runCmd(OPENCLAW_NODE, clawArgs(onboardArgs), {}, {
         OPENAI_BASE_URL: "https://api.atlascloud.ai/v1/",
+      });
+    } else if (payload.authChoice === "modelscope-api-key") {
+      console.log(`[onboard] Running ModelScope onboarding with OPENAI_BASE_URL=https://api-inference.modelscope.ai/v1`);
+      onboard = await runCmd(OPENCLAW_NODE, clawArgs(onboardArgs), {}, {
+        OPENAI_BASE_URL: "https://api-inference.modelscope.ai/v1",
       });
     } else {
       onboard = await runCmd(OPENCLAW_NODE, clawArgs(onboardArgs));
@@ -1042,6 +1243,43 @@ app.post("/setup/api/run", requireSetupAuth, async (req, res) => {
         console.log(`[atlas] Skipping Atlas Cloud configuration (authChoice was: ${payload.authChoice})`);
       }
 
+      // Configure ModelScope.ai if selected (using OpenAI-compatible endpoint)
+      if (payload.authChoice === "modelscope-api-key") {
+        const msModel = payload.modelscopeModel || "zai-org/GLM-4.7-Flash";
+        console.log(`[modelscope] Configuring ModelScope.ai provider with model: ${msModel}`);
+
+        await runCmd(
+          OPENCLAW_NODE,
+          clawArgs(["config", "set", "models.mode", "merge"]),
+        );
+
+        const providerConfig = {
+          baseUrl: "https://api-inference.modelscope.ai/v1",
+          apiKey: "${OPENAI_API_KEY}",
+          api: "openai-completions",
+          models: [
+            { id: "zai-org/GLM-4.7-Flash", name: "GLM-4.7 Flash" },
+            { id: "deepseek-ai/DeepSeek-V3.2", name: "DeepSeek V3.2" },
+          ]
+        };
+
+        console.log(`[modelscope] Provider config:`, JSON.stringify(providerConfig));
+
+        const setProviderResult = await runCmd(
+          OPENCLAW_NODE,
+          clawArgs(["config", "set", "--json", "models.providers.modelscope", JSON.stringify(providerConfig)]),
+        );
+        console.log(`[modelscope] Set provider result: exit=${setProviderResult.code}`, setProviderResult.output || "(no output)");
+
+        const setModelResult = await runCmd(
+          OPENCLAW_NODE,
+          clawArgs(["config", "set", "agents.defaults.model.primary", `modelscope/${msModel}`]),
+        );
+        console.log(`[modelscope] Set model result: exit=${setModelResult.code}`, setModelResult.output || "(no output)");
+
+        extra += `\n[modelscope] configured ModelScope.ai provider (model: ${msModel})\n`;
+      }
+
       // Apply changes immediately.
       await restartGateway();
     }
@@ -1336,6 +1574,404 @@ app.get("/setup/export", requireSetupAuth, async (_req, res) => {
   });
 
   stream.pipe(res);
+});
+
+// ---------------------------------------------------------------------------
+// Agent Configuration REST APIs (for OpenClaw Cloud Dashboard)
+// ---------------------------------------------------------------------------
+
+// GET /setup/api/agent - Read current agent config
+app.get("/setup/api/agent", requireSetupAuth, async (_req, res) => {
+  try {
+    if (!isConfigured()) {
+      return res.json({ ok: false, error: "Not configured. Run setup first." });
+    }
+
+    // Read OpenClaw-native config values in parallel
+    const [modelResult, identityResult, channelsResult] = await Promise.all([
+      runCmd(OPENCLAW_NODE, clawArgs(["config", "get", "agents.defaults.model.primary"])),
+      runCmd(OPENCLAW_NODE, clawArgs(["config", "get", "agents.defaults.identity"])),
+      runCmd(OPENCLAW_NODE, clawArgs(["config", "get", "channels"])),
+    ]);
+
+    const model = modelResult.code === 0 ? modelResult.output.trim() : null;
+
+    let identity = null;
+    if (identityResult.code === 0) {
+      try {
+        identity = JSON.parse(identityResult.output.trim());
+      } catch {
+        identity = identityResult.output.trim() || null;
+      }
+    }
+
+    let channels = null;
+    if (channelsResult.code === 0) {
+      try {
+        channels = JSON.parse(channelsResult.output.trim());
+      } catch {
+        channels = null;
+      }
+    }
+
+    const meta = readAgentMeta();
+    const soulPath = path.join(WORKSPACE_DIR, "SOUL.md");
+    const hasSoul = fs.existsSync(soulPath);
+
+    return res.json({
+      ok: true,
+      data: { model, identity, channels, meta, hasSoul },
+    });
+  } catch (err) {
+    console.error("[/setup/api/agent GET] error:", err);
+    return res.status(500).json({ ok: false, error: String(err) });
+  }
+});
+
+// PUT /setup/api/agent - Update agent config
+app.put("/setup/api/agent", requireSetupAuth, async (req, res) => {
+  try {
+    if (!isConfigured()) {
+      return res.json({ ok: false, error: "Not configured. Run setup first." });
+    }
+
+    const { model, identity, meta, channels } = req.body || {};
+    let needsRestart = false;
+    const results = [];
+
+    if (model) {
+      const r = await runCmd(
+        OPENCLAW_NODE,
+        clawArgs(["config", "set", "agents.defaults.model.primary", model]),
+      );
+      results.push({ field: "model", code: r.code, output: r.output });
+      if (r.code !== 0) {
+        return res.status(500).json({ ok: false, error: "Failed to set model", output: r.output });
+      }
+      needsRestart = true;
+    }
+
+    if (identity) {
+      const r = await runCmd(
+        OPENCLAW_NODE,
+        clawArgs(["config", "set", "--json", "agents.defaults.identity", JSON.stringify(identity)]),
+      );
+      results.push({ field: "identity", code: r.code, output: r.output });
+      if (r.code !== 0) {
+        return res.status(500).json({ ok: false, error: "Failed to set identity", output: r.output });
+      }
+      needsRestart = true;
+    }
+
+    if (channels && typeof channels === "object") {
+      for (const [type, cfg] of Object.entries(channels)) {
+        const r = await runCmd(
+          OPENCLAW_NODE,
+          clawArgs(["config", "set", "--json", `channels.${type}`, JSON.stringify(cfg)]),
+        );
+        results.push({ field: `channels.${type}`, code: r.code, output: r.output });
+        if (r.code !== 0) {
+          return res.status(500).json({ ok: false, error: `Failed to set channels.${type}`, output: r.output });
+        }
+      }
+      needsRestart = true;
+    }
+
+    if (meta && typeof meta === "object") {
+      const existing = readAgentMeta();
+      writeAgentMeta({ ...existing, ...meta });
+      results.push({ field: "meta", code: 0 });
+    }
+
+    if (needsRestart) {
+      await restartGateway();
+    }
+
+    return res.json({ ok: true, data: { results } });
+  } catch (err) {
+    console.error("[/setup/api/agent PUT] error:", err);
+    return res.status(500).json({ ok: false, error: String(err) });
+  }
+});
+
+// GET /setup/api/agent/soul - Read SOUL.md
+app.get("/setup/api/agent/soul", requireSetupAuth, (_req, res) => {
+  try {
+    const soulPath = path.join(WORKSPACE_DIR, "SOUL.md");
+    let content = null;
+    let exists = false;
+    if (fs.existsSync(soulPath)) {
+      content = fs.readFileSync(soulPath, "utf8");
+      exists = true;
+    }
+    return res.json({ ok: true, data: { content, exists } });
+  } catch (err) {
+    console.error("[/setup/api/agent/soul GET] error:", err);
+    return res.status(500).json({ ok: false, error: String(err) });
+  }
+});
+
+// PUT /setup/api/agent/soul - Write SOUL.md
+app.put("/setup/api/agent/soul", requireSetupAuth, (req, res) => {
+  try {
+    const { content } = req.body || {};
+    if (typeof content !== "string") {
+      return res.status(400).json({ ok: false, error: "content must be a string" });
+    }
+    fs.mkdirSync(WORKSPACE_DIR, { recursive: true });
+    const soulPath = path.join(WORKSPACE_DIR, "SOUL.md");
+    fs.writeFileSync(soulPath, content, "utf8");
+    return res.json({ ok: true, data: { written: true } });
+  } catch (err) {
+    console.error("[/setup/api/agent/soul PUT] error:", err);
+    return res.status(500).json({ ok: false, error: String(err) });
+  }
+});
+
+// GET /setup/api/personas/templates - List persona templates (metadata only)
+app.get("/setup/api/personas/templates", requireSetupAuth, (_req, res) => {
+  const templates = PERSONA_TEMPLATES.map(({ id, name, description, category }) => ({
+    id,
+    name,
+    description,
+    category,
+  }));
+  return res.json({ ok: true, data: { templates } });
+});
+
+// POST /setup/api/personas/apply - Apply a persona template
+app.post("/setup/api/personas/apply", requireSetupAuth, async (req, res) => {
+  try {
+    if (!isConfigured()) {
+      return res.json({ ok: false, error: "Not configured. Run setup first." });
+    }
+
+    const { templateId } = req.body || {};
+    const template = PERSONA_TEMPLATES.find((t) => t.id === templateId);
+    if (!template) {
+      return res.status(400).json({ ok: false, error: `Unknown template: ${templateId}` });
+    }
+
+    // Write SOUL.md
+    fs.mkdirSync(WORKSPACE_DIR, { recursive: true });
+    fs.writeFileSync(path.join(WORKSPACE_DIR, "SOUL.md"), template.soul, "utf8");
+
+    // Set identity
+    if (template.identity) {
+      const r = await runCmd(
+        OPENCLAW_NODE,
+        clawArgs(["config", "set", "--json", "agents.defaults.identity", JSON.stringify(template.identity)]),
+      );
+      if (r.code !== 0) {
+        return res.status(500).json({ ok: false, error: "Failed to set identity", output: r.output });
+      }
+    }
+
+    // Set model if template specifies one
+    if (template.model) {
+      const r = await runCmd(
+        OPENCLAW_NODE,
+        clawArgs(["config", "set", "agents.defaults.model.primary", template.model]),
+      );
+      if (r.code !== 0) {
+        return res.status(500).json({ ok: false, error: "Failed to set model", output: r.output });
+      }
+    }
+
+    // Save template selection in agent meta
+    const meta = readAgentMeta();
+    writeAgentMeta({ ...meta, personaTemplate: templateId });
+
+    await restartGateway();
+
+    return res.json({ ok: true, data: { applied: templateId } });
+  } catch (err) {
+    console.error("[/setup/api/personas/apply] error:", err);
+    return res.status(500).json({ ok: false, error: String(err) });
+  }
+});
+
+// ---------------------------------------------------------------------------
+// Skills Management REST APIs (for OpenClaw Cloud Dashboard)
+// ---------------------------------------------------------------------------
+
+const SKILL_ID_RE = /^[a-zA-Z0-9_-]+$/;
+
+// GET /setup/api/skills - List installed skills
+app.get("/setup/api/skills", requireSetupAuth, (_req, res) => {
+  try {
+    if (!fs.existsSync(SKILLS_DIR)) {
+      return res.json({ ok: true, data: { skills: [] } });
+    }
+
+    const entries = fs.readdirSync(SKILLS_DIR, { withFileTypes: true });
+    const skills = [];
+
+    for (const entry of entries) {
+      if (!entry.isDirectory()) continue;
+      const skillMdPath = path.join(SKILLS_DIR, entry.name, "SKILL.md");
+      if (!fs.existsSync(skillMdPath)) continue;
+
+      const content = fs.readFileSync(skillMdPath, "utf8");
+      const meta = parseSkillFrontmatter(content);
+      const hasScripts = fs.existsSync(path.join(SKILLS_DIR, entry.name, "scripts"));
+
+      skills.push({
+        id: entry.name,
+        name: meta.name || entry.name,
+        description: meta.description || "",
+        hasScripts,
+      });
+    }
+
+    return res.json({ ok: true, data: { skills } });
+  } catch (err) {
+    console.error("[/setup/api/skills GET] error:", err);
+    return res.status(500).json({ ok: false, error: String(err) });
+  }
+});
+
+// POST /setup/api/skills/upload - Upload & install skill archive (.tar.gz)
+app.post(
+  "/setup/api/skills/upload",
+  requireSetupAuth,
+  express.raw({ type: "application/gzip", limit: "10mb" }),
+  async (req, res) => {
+    let tmpDir = null;
+    try {
+      if (!req.body || !req.body.length) {
+        return res.status(400).json({ ok: false, error: "Empty body. Send a .tar.gz archive." });
+      }
+
+      // Extract to temp directory first
+      tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "skill-upload-"));
+      const archivePath = path.join(tmpDir, "upload.tar.gz");
+      fs.writeFileSync(archivePath, req.body);
+
+      await tar.x({ file: archivePath, cwd: tmpDir });
+
+      // Find the top-level directory (ignore the archive file itself)
+      const extracted = fs.readdirSync(tmpDir).filter((f) => f !== "upload.tar.gz");
+
+      if (extracted.length !== 1) {
+        return res.status(400).json({
+          ok: false,
+          error: `Archive must contain exactly one top-level directory. Found: ${extracted.join(", ") || "(empty)"}`,
+        });
+      }
+
+      const skillDirName = extracted[0];
+      const extractedPath = path.join(tmpDir, skillDirName);
+
+      if (!fs.statSync(extractedPath).isDirectory()) {
+        return res.status(400).json({ ok: false, error: "Top-level entry is not a directory." });
+      }
+
+      // Validate directory name
+      if (!SKILL_ID_RE.test(skillDirName)) {
+        return res.status(400).json({
+          ok: false,
+          error: `Invalid skill directory name "${skillDirName}". Use alphanumeric, hyphens, and underscores only.`,
+        });
+      }
+
+      // Validate SKILL.md exists
+      if (!fs.existsSync(path.join(extractedPath, "SKILL.md"))) {
+        return res.status(400).json({
+          ok: false,
+          error: "Skill directory must contain a SKILL.md file.",
+        });
+      }
+
+      // Install: move to SKILLS_DIR (overwrite if exists)
+      fs.mkdirSync(SKILLS_DIR, { recursive: true });
+      const destPath = path.join(SKILLS_DIR, skillDirName);
+      fs.rmSync(destPath, { recursive: true, force: true });
+      fs.cpSync(extractedPath, destPath, { recursive: true });
+
+      return res.json({ ok: true, data: { installed: skillDirName } });
+    } catch (err) {
+      console.error("[/setup/api/skills/upload] error:", err);
+      return res.status(500).json({ ok: false, error: String(err) });
+    } finally {
+      if (tmpDir) {
+        try {
+          fs.rmSync(tmpDir, { recursive: true, force: true });
+        } catch {
+          // ignore cleanup errors
+        }
+      }
+    }
+  },
+);
+
+// GET /setup/api/skills/:id - Get skill details
+app.get("/setup/api/skills/:id", requireSetupAuth, (req, res) => {
+  try {
+    const { id } = req.params;
+    if (!SKILL_ID_RE.test(id)) {
+      return res.status(400).json({ ok: false, error: "Invalid skill ID." });
+    }
+
+    const skillDir = path.join(SKILLS_DIR, id);
+    const skillMdPath = path.join(skillDir, "SKILL.md");
+
+    if (!fs.existsSync(skillMdPath)) {
+      return res.status(404).json({ ok: false, error: `Skill "${id}" not found.` });
+    }
+
+    const content = fs.readFileSync(skillMdPath, "utf8");
+    const meta = parseSkillFrontmatter(content);
+
+    // List all files in the skill directory recursively
+    const files = [];
+    function walk(dir, prefix) {
+      for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+        const rel = prefix ? `${prefix}/${entry.name}` : entry.name;
+        if (entry.isDirectory()) {
+          walk(path.join(dir, entry.name), rel);
+        } else {
+          files.push(rel);
+        }
+      }
+    }
+    walk(skillDir, "");
+
+    return res.json({
+      ok: true,
+      data: {
+        id,
+        name: meta.name || id,
+        description: meta.description || "",
+        content,
+        files,
+      },
+    });
+  } catch (err) {
+    console.error("[/setup/api/skills/:id GET] error:", err);
+    return res.status(500).json({ ok: false, error: String(err) });
+  }
+});
+
+// DELETE /setup/api/skills/:id - Remove installed skill
+app.delete("/setup/api/skills/:id", requireSetupAuth, (req, res) => {
+  try {
+    const { id } = req.params;
+    if (!SKILL_ID_RE.test(id)) {
+      return res.status(400).json({ ok: false, error: "Invalid skill ID." });
+    }
+
+    const skillDir = path.join(SKILLS_DIR, id);
+    if (!fs.existsSync(skillDir)) {
+      return res.status(404).json({ ok: false, error: `Skill "${id}" not found.` });
+    }
+
+    fs.rmSync(skillDir, { recursive: true, force: true });
+    return res.json({ ok: true, data: { removed: id } });
+  } catch (err) {
+    console.error("[/setup/api/skills/:id DELETE] error:", err);
+    return res.status(500).json({ ok: false, error: String(err) });
+  }
 });
 
 // Proxy everything else to the gateway.

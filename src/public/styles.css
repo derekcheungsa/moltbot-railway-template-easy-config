@@ -1,36 +1,45 @@
 /* ===================================
-   CSS Custom Properties
+   CSS Custom Properties — Retro Geometric Theme
    =================================== */
 :root {
-  /* Colors */
-  --bg-primary: #050810;
-  --bg-secondary: #111827;
-  --bg-tertiary: #1f2937;
-  --bg-hover: #374151;
-  --text-primary: #f0f4ff;
-  --text-secondary: #9ca3af;
-  --text-muted: #6b7280;
-  --border-color: #1f2937;
-  --border-hover: #374151;
+  /* Colors — Bold retro palette */
+  --bg-primary: #1a1a2e;
+  --bg-secondary: #16213e;
+  --bg-tertiary: #0f3460;
+  --bg-hover: #1a4080;
+  --text-primary: #f5f5f5;
+  --text-secondary: #b8c1ec;
+  --text-muted: #8892b0;
+  --border-color: #e84393;
+  --border-hover: #fd79a8;
 
-  /* Accent Colors */
-  --accent-primary: #ff4d4d;
-  --accent-hover: #e63946;
-  --accent-focus: rgba(255, 77, 77, 0.3);
+  /* Accent Colors — Retro vibrant */
+  --accent-primary: #00cec9;
+  --accent-hover: #00b894;
+  --accent-focus: rgba(0, 206, 201, 0.35);
+
+  /* Retro Palette Extras */
+  --retro-pink: #e84393;
+  --retro-yellow: #fdcb6e;
+  --retro-orange: #e17055;
+  --retro-purple: #a29bfe;
+  --retro-coral: #ff7675;
+  --retro-mint: #55efc4;
 
   /* Semantic Colors */
-  --success: #10b981;
-  --success-bg: rgba(16, 185, 129, 0.1);
-  --warning: #f59e0b;
-  --warning-bg: rgba(245, 158, 11, 0.1);
-  --error: #ef4444;
-  --error-bg: rgba(239, 68, 68, 0.1);
-  --info: #3b82f6;
-  --info-bg: rgba(59, 130, 246, 0.1);
+  --success: #55efc4;
+  --success-bg: rgba(85, 239, 196, 0.12);
+  --warning: #fdcb6e;
+  --warning-bg: rgba(253, 203, 110, 0.12);
+  --error: #ff7675;
+  --error-bg: rgba(255, 118, 117, 0.12);
+  --info: #74b9ff;
+  --info-bg: rgba(116, 185, 255, 0.12);
 
   /* Typography */
-  --font-sans: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-  --font-mono: ui-monospace, 'SF Mono', 'SFMono-Regular', 'Menlo', 'Monaco', 'Consolas', monospace;
+  --font-sans: 'Space Grotesk', 'Archivo', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: 'Space Mono', 'JetBrains Mono', ui-monospace, 'SF Mono', 'Consolas', monospace;
+  --font-display: 'Space Grotesk', 'Archivo Black', Impact, sans-serif;
 
   /* Spacing Scale (rem) */
   --space-xs: 0.25rem;
@@ -40,11 +49,11 @@
   --space-xl: 2rem;
   --space-2xl: 3rem;
 
-  /* Border Radius */
-  --radius-sm: 6px;
+  /* Border Radius — More geometric */
+  --radius-sm: 4px;
   --radius-md: 8px;
-  --radius-lg: 12px;
-  --radius-xl: 16px;
+  --radius-lg: 16px;
+  --radius-xl: 24px;
   --radius-full: 9999px;
 
   /* Transitions */
@@ -52,12 +61,17 @@
   --transition-base: 200ms ease;
   --transition-slow: 300ms ease;
 
-  /* Shadows */
-  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
-  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.4);
-  --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.5);
-  --shadow-glow: 0 0 20px rgba(255, 77, 77, 0.3);
+  /* Shadows — Hard offset retro style */
+  --shadow-sm: 3px 3px 0 rgba(232, 67, 147, 0.3);
+  --shadow-md: 5px 5px 0 rgba(232, 67, 147, 0.25);
+  --shadow-lg: 8px 8px 0 rgba(232, 67, 147, 0.2);
+  --shadow-glow: 0 0 30px rgba(0, 206, 201, 0.4), 0 0 60px rgba(0, 206, 201, 0.15);
 }
+
+/* ===================================
+   Web Fonts
+   =================================== */
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap');
 
 /* ===================================
    Base Styles
@@ -74,6 +88,43 @@ body {
   background: var(--bg-primary);
   color: var(--text-primary);
   line-height: 1.6;
+  position: relative;
+  overflow-x: hidden;
+}
+
+/* Decorative background — geometric shapes */
+body::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 0;
+  background:
+    /* Circles */
+    radial-gradient(circle 120px at 5% 15%, rgba(232, 67, 147, 0.08) 50%, transparent 51%),
+    radial-gradient(circle 80px at 92% 8%, rgba(0, 206, 201, 0.08) 50%, transparent 51%),
+    radial-gradient(circle 60px at 88% 75%, rgba(253, 203, 110, 0.07) 50%, transparent 51%),
+    radial-gradient(circle 100px at 10% 85%, rgba(162, 155, 254, 0.06) 50%, transparent 51%),
+    /* Dots grid */
+    radial-gradient(circle 2px at 20px 20px, rgba(232, 67, 147, 0.12) 50%, transparent 51%);
+  background-size: 100% 100%, 100% 100%, 100% 100%, 100% 100%, 40px 40px;
+}
+
+body::after {
+  content: '';
+  position: fixed;
+  top: 60px;
+  right: 40px;
+  width: 0;
+  height: 0;
+  border-left: 30px solid transparent;
+  border-right: 30px solid transparent;
+  border-bottom: 52px solid rgba(253, 203, 110, 0.06);
+  pointer-events: none;
+  z-index: 0;
 }
 
 /* ===================================
@@ -82,6 +133,8 @@ body {
 .wizard-container {
   max-width: 900px;
   margin: 0 auto;
+  position: relative;
+  z-index: 1;
 }
 
 /* ===================================
@@ -95,7 +148,31 @@ body {
   padding: var(--space-lg);
   background: var(--bg-secondary);
   border-radius: var(--radius-lg);
-  border: 1px solid var(--border-color);
+  border: 2px solid var(--retro-pink);
+  box-shadow: var(--shadow-md);
+  position: relative;
+  overflow: hidden;
+}
+
+/* Decorative zigzag on stepper */
+.stepper::before {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: repeating-linear-gradient(
+    90deg,
+    var(--retro-pink) 0px,
+    var(--retro-pink) 10px,
+    var(--retro-yellow) 10px,
+    var(--retro-yellow) 20px,
+    var(--accent-primary) 20px,
+    var(--accent-primary) 30px,
+    var(--retro-purple) 30px,
+    var(--retro-purple) 40px
+  );
 }
 
 .step-item {
@@ -108,31 +185,32 @@ body {
 
 .step-circle {
   position: relative;
-  width: 44px;
-  height: 44px;
+  width: 48px;
+  height: 48px;
   border-radius: var(--radius-full);
   background: var(--bg-tertiary);
-  border: 2px solid var(--border-color);
+  border: 3px solid var(--retro-purple);
   display: flex;
   align-items: center;
   justify-content: center;
   transition: all var(--transition-base);
-  font-weight: 600;
+  font-weight: 700;
   font-size: 1.1rem;
   color: var(--text-muted);
 }
 
 .step-item.active .step-circle {
   background: var(--accent-primary);
-  border-color: var(--accent-primary);
-  color: white;
+  border-color: var(--retro-yellow);
+  color: var(--bg-primary);
   box-shadow: var(--shadow-glow);
+  transform: scale(1.1);
 }
 
 .step-item.completed .step-circle {
   background: var(--success);
-  border-color: var(--success);
-  color: white;
+  border-color: var(--retro-mint);
+  color: var(--bg-primary);
 }
 
 .step-number {
@@ -156,32 +234,36 @@ body {
 }
 
 .step-label {
-  font-size: 0.875rem;
-  font-weight: 500;
+  font-size: 0.85rem;
+  font-weight: 600;
   color: var(--text-muted);
   transition: color var(--transition-base);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 
 .step-item.active .step-label {
-  color: var(--text-primary);
-  font-weight: 600;
+  color: var(--accent-primary);
+  font-weight: 700;
 }
 
 .step-item.completed .step-label {
-  color: var(--text-secondary);
+  color: var(--success);
 }
 
 .step-line {
   flex: 1;
-  height: 2px;
-  background: var(--border-color);
+  height: 3px;
+  background: var(--retro-purple);
   margin: 0 var(--space-sm);
   margin-bottom: 28px;
   transition: background var(--transition-base);
+  opacity: 0.4;
 }
 
 .step-item.completed ~ .step-line {
   background: var(--success);
+  opacity: 1;
 }
 
 /* ===================================
@@ -199,7 +281,7 @@ body {
 @keyframes fadeIn {
   from {
     opacity: 0;
-    transform: translateY(10px);
+    transform: translateY(12px);
   }
   to {
     opacity: 1;
@@ -208,15 +290,42 @@ body {
 }
 
 /* ===================================
-   Cards
+   Cards — Retro Card Style
    =================================== */
 .card {
   background: var(--bg-secondary);
-  border: 1px solid var(--border-color);
+  border: 2px solid var(--retro-pink);
   border-radius: var(--radius-lg);
   padding: var(--space-xl);
   margin-bottom: var(--space-lg);
-  box-shadow: var(--shadow-md);
+  box-shadow: var(--shadow-lg);
+  position: relative;
+  overflow: hidden;
+}
+
+/* Corner decorations on cards */
+.card::before {
+  content: '';
+  position: absolute;
+  top: -1px;
+  right: -1px;
+  width: 40px;
+  height: 40px;
+  background: linear-gradient(135deg, transparent 50%, var(--retro-yellow) 50%);
+  border-radius: 0 var(--radius-lg) 0 0;
+  opacity: 0.7;
+}
+
+.card::after {
+  content: '';
+  position: absolute;
+  bottom: -1px;
+  left: -1px;
+  width: 30px;
+  height: 30px;
+  background: var(--retro-purple);
+  border-radius: 0 var(--radius-lg) 0 var(--radius-lg);
+  opacity: 0.3;
 }
 
 .welcome-card {
@@ -232,24 +341,34 @@ body {
    Typography
    =================================== */
 h1 {
-  font-size: 2rem;
+  font-family: var(--font-display);
+  font-size: 2.2rem;
   font-weight: 700;
   margin: var(--space-lg) 0 var(--space-md);
   color: var(--text-primary);
+  letter-spacing: -0.02em;
+  background: linear-gradient(135deg, var(--accent-primary), var(--retro-yellow));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
 h2 {
+  font-family: var(--font-display);
   font-size: 1.5rem;
-  font-weight: 600;
+  font-weight: 700;
   margin: 0 0 var(--space-md);
-  color: var(--text-primary);
+  color: var(--accent-primary);
+  letter-spacing: -0.01em;
 }
 
 h3 {
   font-size: 1.1rem;
-  font-weight: 600;
+  font-weight: 700;
   margin: var(--space-md) 0 var(--space-sm);
-  color: var(--text-primary);
+  color: var(--retro-yellow);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
 }
 
 p {
@@ -275,15 +394,33 @@ p {
    =================================== */
 .welcome-icon {
   display: inline-flex;
-  width: 64px;
-  height: 64px;
+  width: 72px;
+  height: 72px;
   align-items: center;
   justify-content: center;
-  background: var(--accent-primary);
-  border-radius: var(--radius-lg);
+  background: linear-gradient(135deg, var(--accent-primary), var(--retro-purple));
+  border-radius: 50%;
   color: white;
   margin-bottom: var(--space-md);
   box-shadow: var(--shadow-glow);
+  border: 3px solid var(--retro-yellow);
+  position: relative;
+}
+
+/* Decorative ring around welcome icon */
+.welcome-icon::after {
+  content: '';
+  position: absolute;
+  width: 90px;
+  height: 90px;
+  border: 2px dashed var(--retro-pink);
+  border-radius: 50%;
+  animation: spin 20s linear infinite;
+}
+
+@keyframes slowSpin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
 }
 
 .welcome-icon svg {
@@ -309,14 +446,38 @@ p {
   padding: var(--space-md);
   background: var(--bg-tertiary);
   border-radius: var(--radius-md);
-  border: 1px solid var(--border-color);
+  border: 2px solid transparent;
+  border-left: 4px solid var(--retro-pink);
+  transition: all var(--transition-base);
+}
+
+.feature-item:nth-child(2) {
+  border-left-color: var(--accent-primary);
+}
+
+.feature-item:nth-child(3) {
+  border-left-color: var(--retro-yellow);
+}
+
+.feature-item:hover {
+  border-color: var(--retro-pink);
+  transform: translateX(4px);
+  box-shadow: var(--shadow-sm);
 }
 
 .feature-icon {
   flex-shrink: 0;
   width: 24px;
   height: 24px;
+  color: var(--retro-pink);
+}
+
+.feature-item:nth-child(2) .feature-icon {
   color: var(--accent-primary);
+}
+
+.feature-item:nth-child(3) .feature-icon {
+  color: var(--retro-yellow);
 }
 
 .feature-item strong {
@@ -333,10 +494,24 @@ p {
   gap: var(--space-md);
   padding: var(--space-md);
   background: var(--info-bg);
-  border: 1px solid var(--info);
+  border: 2px solid var(--info);
   border-radius: var(--radius-md);
   margin: var(--space-xl) 0;
   text-align: left;
+  position: relative;
+}
+
+/* Decorative dot on info box */
+.info-box::before {
+  content: '';
+  position: absolute;
+  top: -6px;
+  right: 20px;
+  width: 12px;
+  height: 12px;
+  background: var(--retro-yellow);
+  border-radius: 50%;
+  border: 2px solid var(--bg-secondary);
 }
 
 .info-icon {
@@ -367,32 +542,37 @@ p {
 label {
   display: block;
   margin-top: var(--space-md);
-  font-weight: 600;
+  font-weight: 700;
   color: var(--text-primary);
   font-size: 0.95rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  font-size: 0.85rem;
 }
 
 .required {
-  color: var(--error);
+  color: var(--retro-coral);
   margin-left: 2px;
 }
 
 .badge {
   display: inline-block;
-  padding: 2px 8px;
-  background: var(--accent-primary);
+  padding: 2px 10px;
+  background: linear-gradient(135deg, var(--retro-pink), var(--retro-purple));
   color: white;
-  font-size: 0.7rem;
+  font-size: 0.65rem;
   font-weight: 700;
   border-radius: var(--radius-full);
   margin-left: var(--space-sm);
   text-transform: uppercase;
+  letter-spacing: 0.08em;
 }
 
 .optional-text {
   font-weight: 400;
   color: var(--text-muted);
   font-size: 0.9rem;
+  text-transform: none;
 }
 
 input,
@@ -400,10 +580,11 @@ select {
   width: 100%;
   padding: 0.75rem;
   margin-top: var(--space-sm);
-  background: var(--bg-tertiary);
-  border: 1px solid var(--border-color);
+  background: var(--bg-primary);
+  border: 2px solid var(--retro-purple);
   border-radius: var(--radius-md);
   color: var(--text-primary);
+  font-family: var(--font-sans);
   font-size: 0.95rem;
   transition: all var(--transition-base);
 }
@@ -412,17 +593,18 @@ input:focus,
 select:focus {
   outline: none;
   border-color: var(--accent-primary);
-  box-shadow: 0 0 0 3px var(--accent-focus);
+  box-shadow: 0 0 0 3px var(--accent-focus), var(--shadow-glow);
 }
 
 input::placeholder {
   color: var(--text-muted);
+  font-style: italic;
 }
 
 select {
   cursor: pointer;
   appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%239ca3af'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%23a29bfe'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
   background-repeat: no-repeat;
   background-position: right 0.75rem center;
   background-size: 1.2rem;
@@ -447,6 +629,7 @@ select {
   font-weight: 400;
   font-size: 0.85rem;
   color: var(--text-muted);
+  text-transform: none;
 }
 
 .password-input-wrapper {
@@ -466,7 +649,7 @@ select {
   background: transparent;
   border: 0;
   padding: 0.5rem;
-  color: var(--text-muted);
+  color: var(--retro-purple);
   cursor: pointer;
   border-radius: var(--radius-sm);
   display: flex;
@@ -477,7 +660,7 @@ select {
 
 .visibility-toggle:hover {
   background: var(--bg-hover);
-  color: var(--text-primary);
+  color: var(--accent-primary);
 }
 
 .visibility-toggle svg {
@@ -490,6 +673,8 @@ select {
   font-size: 0.85rem;
   color: var(--text-muted);
   margin-top: var(--space-xs);
+  text-transform: none;
+  font-weight: 400;
 }
 
 /* ===================================
@@ -503,15 +688,16 @@ select {
 }
 
 .accordion-item {
-  border: 1px solid var(--border-color);
+  border: 2px solid var(--retro-purple);
   border-radius: var(--radius-md);
   overflow: hidden;
   background: var(--bg-tertiary);
-  transition: border-color var(--transition-base);
+  transition: all var(--transition-base);
 }
 
 .accordion-item:hover {
-  border-color: var(--border-hover);
+  border-color: var(--retro-pink);
+  box-shadow: var(--shadow-sm);
 }
 
 .accordion-header {
@@ -523,8 +709,9 @@ select {
   background: transparent;
   border: 0;
   color: var(--text-primary);
+  font-family: var(--font-sans);
   font-size: 0.95rem;
-  font-weight: 500;
+  font-weight: 600;
   cursor: pointer;
   text-align: left;
   transition: all var(--transition-base);
@@ -549,11 +736,12 @@ select {
   width: 20px;
   height: 20px;
   transition: transform var(--transition-base);
+  color: var(--retro-pink);
 }
 
 .accordion-content {
   padding: 0 var(--space-md) var(--space-md);
-  border-top: 1px solid var(--border-color);
+  border-top: 2px dashed var(--retro-purple);
   animation: slideDown var(--transition-base);
 }
 
@@ -571,16 +759,17 @@ select {
 .help-text {
   margin-top: var(--space-sm);
   padding: var(--space-md);
-  background: var(--bg-secondary);
+  background: var(--bg-primary);
   border-radius: var(--radius-sm);
   font-size: 0.9rem;
   color: var(--text-muted);
+  border-left: 3px solid var(--retro-yellow);
 }
 
 .help-text strong {
   display: block;
   margin-bottom: var(--space-sm);
-  color: var(--text-primary);
+  color: var(--retro-yellow);
 }
 
 .help-text ol {
@@ -600,7 +789,7 @@ select {
   padding: var(--space-md);
   background: var(--bg-tertiary);
   border-radius: var(--radius-md);
-  border: 1px solid var(--border-color);
+  border: 2px solid var(--retro-purple);
 }
 
 .review-item {
@@ -608,7 +797,7 @@ select {
   justify-content: space-between;
   align-items: center;
   padding: var(--space-sm) 0;
-  border-bottom: 1px solid var(--border-color);
+  border-bottom: 1px dashed rgba(162, 155, 254, 0.3);
 }
 
 .review-item:last-child {
@@ -616,12 +805,15 @@ select {
 }
 
 .review-label {
-  font-weight: 500;
+  font-weight: 600;
   color: var(--text-secondary);
+  text-transform: uppercase;
+  font-size: 0.8rem;
+  letter-spacing: 0.04em;
 }
 
 .review-value {
-  font-weight: 600;
+  font-weight: 700;
   color: var(--text-primary);
   text-align: right;
 }
@@ -629,7 +821,7 @@ select {
 .review-value.masked {
   font-family: var(--font-mono);
   font-size: 0.9rem;
-  color: var(--text-muted);
+  color: var(--retro-purple);
 }
 
 /* ===================================
@@ -640,7 +832,7 @@ select {
   gap: var(--space-md);
   padding: var(--space-md);
   background: var(--warning-bg);
-  border: 1px solid var(--warning);
+  border: 2px solid var(--warning);
   border-radius: var(--radius-md);
   margin: var(--space-xl) 0;
 }
@@ -673,12 +865,14 @@ select {
   padding: var(--space-md);
   background: var(--bg-tertiary);
   border-radius: var(--radius-md);
+  border: 2px solid var(--retro-purple);
   cursor: pointer;
-  transition: background var(--transition-base);
+  transition: all var(--transition-base);
 }
 
 .checkbox-label:hover {
-  background: var(--bg-hover);
+  border-color: var(--accent-primary);
+  box-shadow: var(--shadow-sm);
 }
 
 .checkbox-label input[type="checkbox"] {
@@ -686,10 +880,11 @@ select {
   height: 20px;
   margin: 0;
   cursor: pointer;
+  accent-color: var(--accent-primary);
 }
 
 .checkbox-label span {
-  font-weight: 500;
+  font-weight: 600;
   color: var(--text-primary);
 }
 
@@ -709,24 +904,32 @@ select {
 
 .progress-bar {
   flex: 1;
-  height: 8px;
-  background: var(--bg-tertiary);
+  height: 10px;
+  background: var(--bg-primary);
   border-radius: var(--radius-full);
   overflow: hidden;
-  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.3);
+  border: 2px solid var(--retro-purple);
 }
 
 .progress-fill {
   height: 100%;
-  background: linear-gradient(90deg, var(--accent-primary), var(--accent-hover));
+  background: linear-gradient(90deg, var(--accent-primary), var(--retro-yellow), var(--retro-pink));
+  background-size: 200% 100%;
+  animation: shimmer 2s ease infinite;
   border-radius: var(--radius-full);
   transition: width 0.5s ease;
   box-shadow: var(--shadow-glow);
 }
 
+@keyframes shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
 .progress-text {
-  font-weight: 600;
-  color: var(--text-primary);
+  font-family: var(--font-mono);
+  font-weight: 700;
+  color: var(--accent-primary);
   min-width: 3rem;
   text-align: right;
 }
@@ -742,11 +945,11 @@ pre {
   white-space: pre-wrap;
   word-wrap: break-word;
   background: var(--bg-primary);
-  border: 1px solid var(--border-color);
+  border: 2px solid var(--retro-purple);
   border-radius: var(--radius-md);
   padding: var(--space-md);
   margin: 0;
-  color: var(--text-muted);
+  color: var(--accent-primary);
   font-family: var(--font-mono);
   font-size: 0.85rem;
   line-height: 1.5;
@@ -771,18 +974,19 @@ pre {
   height: 80px;
   color: var(--success);
   animation: scaleIn 0.5s ease;
+  filter: drop-shadow(0 0 15px rgba(85, 239, 196, 0.5));
 }
 
 @keyframes scaleIn {
   0% {
-    transform: scale(0);
+    transform: scale(0) rotate(-180deg);
     opacity: 0;
   }
   50% {
-    transform: scale(1.1);
+    transform: scale(1.1) rotate(10deg);
   }
   100% {
-    transform: scale(1);
+    transform: scale(1) rotate(0deg);
     opacity: 1;
   }
 }
@@ -813,12 +1017,8 @@ pre {
 }
 
 @keyframes spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
 }
 
 .next-steps {
@@ -833,21 +1033,28 @@ pre {
   margin-bottom: var(--space-md);
   background: var(--bg-tertiary);
   border-radius: var(--radius-md);
-  border: 1px solid var(--border-color);
+  border: 2px solid var(--retro-purple);
+  transition: all var(--transition-base);
+}
+
+.step-card:hover {
+  border-color: var(--retro-pink);
+  transform: translateX(4px);
 }
 
 .step-number {
   flex-shrink: 0;
-  width: 32px;
-  height: 32px;
-  background: var(--accent-primary);
+  width: 36px;
+  height: 36px;
+  background: linear-gradient(135deg, var(--retro-pink), var(--retro-orange));
   color: white;
-  border-radius: var(--radius-full);
+  border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   font-weight: 700;
   font-size: 0.9rem;
+  border: 2px solid var(--retro-yellow);
 }
 
 .step-card strong {
@@ -875,7 +1082,7 @@ pre {
 }
 
 .separator {
-  color: var(--border-hover);
+  color: var(--retro-purple);
 }
 
 /* ===================================
@@ -892,9 +1099,10 @@ pre {
   align-items: center;
   justify-content: center;
   background: var(--error-bg);
-  border-radius: var(--radius-full);
+  border-radius: 50%;
   color: var(--error);
   margin: var(--space-lg) 0;
+  border: 3px solid var(--retro-coral);
 }
 
 .error-icon svg {
@@ -908,7 +1116,7 @@ pre {
 .error-message {
   padding: var(--space-md);
   background: var(--error-bg);
-  border: 1px solid var(--error);
+  border: 2px solid var(--error);
   border-radius: var(--radius-md);
   color: var(--error);
   font-size: 0.9rem;
@@ -925,9 +1133,10 @@ pre {
   flex-wrap: wrap;
   padding: var(--space-md) var(--space-lg);
   background: var(--success-bg);
-  border: 1px solid var(--success);
+  border: 2px solid var(--success);
   border-radius: var(--radius-lg);
   margin-bottom: var(--space-lg);
+  box-shadow: 4px 4px 0 rgba(85, 239, 196, 0.2);
 }
 
 .configured-banner svg {
@@ -939,35 +1148,38 @@ pre {
 
 .configured-banner span {
   color: var(--success);
-  font-weight: 500;
+  font-weight: 600;
 }
 
 .link-button {
   background: transparent;
   border: 0;
   color: var(--success);
-  font-weight: 600;
+  font-weight: 700;
   cursor: pointer;
   padding: 0;
   font-size: inherit;
+  font-family: var(--font-sans);
   text-decoration: underline;
+  text-decoration-style: wavy;
   transition: color var(--transition-fast);
 }
 
 .link-button:hover {
-  color: var(--text-primary);
+  color: var(--retro-mint);
 }
 
 /* ===================================
-   Buttons
+   Buttons — Bold retro style
    =================================== */
 button {
   padding: 0.8rem 1.5rem;
   border-radius: var(--radius-md);
-  border: 0;
-  background: var(--accent-primary);
-  color: white;
-  font-weight: 600;
+  border: 2px solid transparent;
+  background: linear-gradient(135deg, var(--accent-primary), var(--accent-hover));
+  color: var(--bg-primary);
+  font-family: var(--font-sans);
+  font-weight: 700;
   font-size: 0.95rem;
   cursor: pointer;
   transition: all var(--transition-base);
@@ -975,26 +1187,29 @@ button {
   align-items: center;
   gap: var(--space-sm);
   line-height: 1;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  box-shadow: 4px 4px 0 rgba(0, 206, 201, 0.3);
 }
 
 button:hover:not(:disabled) {
-  background: var(--accent-hover);
-  transform: translateY(-1px);
-  box-shadow: var(--shadow-md);
+  transform: translate(-2px, -2px);
+  box-shadow: 6px 6px 0 rgba(0, 206, 201, 0.4);
 }
 
 button:active:not(:disabled) {
-  transform: translateY(0);
+  transform: translate(1px, 1px);
+  box-shadow: 2px 2px 0 rgba(0, 206, 201, 0.3);
 }
 
 button:disabled {
-  opacity: 0.5;
+  opacity: 0.4;
   cursor: not-allowed;
   transform: none;
 }
 
 button:focus-visible {
-  outline: 2px solid var(--accent-primary);
+  outline: 2px solid var(--retro-yellow);
   outline-offset: 2px;
 }
 
@@ -1004,18 +1219,22 @@ button:focus-visible {
 }
 
 .btn-primary {
-  background: var(--accent-primary);
+  background: linear-gradient(135deg, var(--accent-primary), var(--accent-hover));
+  color: var(--bg-primary);
+  border-color: var(--accent-primary);
 }
 
 .btn-secondary {
   background: var(--bg-tertiary);
-  border: 1px solid var(--border-color);
+  border: 2px solid var(--retro-purple);
   color: var(--text-primary);
+  box-shadow: 4px 4px 0 rgba(162, 155, 254, 0.2);
 }
 
 .btn-secondary:hover:not(:disabled) {
   background: var(--bg-hover);
-  border-color: var(--border-hover);
+  border-color: var(--retro-pink);
+  box-shadow: 6px 6px 0 rgba(162, 155, 254, 0.3);
 }
 
 button svg {
@@ -1031,7 +1250,7 @@ button svg {
   justify-content: space-between;
   gap: var(--space-md);
   padding-top: var(--space-lg);
-  border-top: 1px solid var(--border-color);
+  border-top: 3px solid var(--retro-pink);
 }
 
 .nav-footer button {
@@ -1044,23 +1263,46 @@ button svg {
    Links
    =================================== */
 a {
-  color: var(--info);
+  color: var(--accent-primary);
   text-decoration: none;
   transition: color var(--transition-base);
+  font-weight: 600;
 }
 
 a:hover {
-  color: var(--accent-primary);
+  color: var(--retro-pink);
   text-decoration: underline;
+  text-decoration-style: wavy;
 }
 
 code {
-  background: var(--bg-tertiary);
-  color: var(--accent-primary);
-  padding: 0.15rem 0.4rem;
+  background: var(--bg-primary);
+  color: var(--retro-yellow);
+  padding: 0.15rem 0.5rem;
   border-radius: var(--radius-sm);
   font-family: var(--font-mono);
   font-size: 0.9em;
+  border: 1px solid var(--retro-purple);
+}
+
+/* ===================================
+   Scrollbar — Retro styled
+   =================================== */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg-primary);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--retro-purple);
+  border-radius: var(--radius-full);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--retro-pink);
 }
 
 /* ===================================
@@ -1087,7 +1329,7 @@ code {
   }
 
   .step-label {
-    font-size: 0.75rem;
+    font-size: 0.7rem;
   }
 
   h1 {
@@ -1147,7 +1389,7 @@ code {
     background: var(--bg-primary);
     padding: var(--space-md);
     margin: 0 calc(-1 * var(--space-md));
-    border-top: 1px solid var(--border-color);
+    border-top: 3px solid var(--retro-pink);
   }
 
   .nav-footer button {
@@ -1157,13 +1399,18 @@ code {
 
 @media (max-width: 480px) {
   .welcome-icon {
-    width: 48px;
-    height: 48px;
+    width: 56px;
+    height: 56px;
   }
 
   .welcome-icon svg {
     width: 28px;
     height: 28px;
+  }
+
+  .welcome-icon::after {
+    width: 72px;
+    height: 72px;
   }
 
   .step-card {
@@ -1189,7 +1436,7 @@ code {
    Focus Styles for Accessibility
    =================================== */
 :focus-visible {
-  outline: 2px solid var(--accent-primary);
+  outline: 2px solid var(--retro-yellow);
   outline-offset: 2px;
 }
 
@@ -1213,6 +1460,11 @@ select:focus-visible {
     color: black;
   }
 
+  body::before,
+  body::after {
+    display: none;
+  }
+
   .stepper,
   .nav-footer {
     display: none;
@@ -1220,5 +1472,12 @@ select:focus-visible {
 
   .card {
     break-inside: avoid;
+    border-color: #ccc;
+    box-shadow: none;
+  }
+
+  .card::before,
+  .card::after {
+    display: none;
   }
 }

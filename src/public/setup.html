@@ -226,6 +226,34 @@
           </div>
         </div>
 
+        <!-- ModelScope Model Selection (shown only when ModelScope is selected) -->
+        <div id="modelscope-model-group" hidden>
+          <label for="modelscopeModel">
+            ModelScope.ai Model
+            <span class="badge">ModelScope.ai</span>
+          </label>
+          <select id="modelscopeModel">
+            <option value="">Loading models...</option>
+          </select>
+          <span class="hint-text">Select the AI model to use from ModelScope.ai.</span>
+          <div id="modelscope-model-info" class="info-box" style="margin-top: 0.75rem;" hidden>
+            <div style="display: flex; justify-content: space-between; align-items: start; gap: 1rem;">
+              <div style="flex: 1;">
+                <strong id="modelscope-model-name">Model Name</strong>
+                <p id="modelscope-model-desc" class="muted" style="margin: 0.25rem 0 0.5rem 0;">Model description</p>
+              </div>
+              <div style="text-align: right; white-space: nowrap;">
+                <div class="muted" style="font-size: 0.875rem;">
+                  <span id="modelscope-model-context">0K</span> context
+                </div>
+                <div class="muted" style="font-size: 0.875rem;">
+                  $<span id="modelscope-model-input">0.00</span>/M in · $<span id="modelscope-model-output">0.00</span>/M out
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <div id="step2-error" class="error-message" role="alert" aria-live="polite" hidden></div>
       </div>
     </section>
@@ -343,6 +371,10 @@
           <div class="review-item" id="review-atlas-model-row" hidden>
             <span class="review-label">Atlas Cloud Model:</span>
             <span class="review-value" id="review-atlasModel">-</span>
+          </div>
+          <div class="review-item" id="review-modelscope-model-row" hidden>
+            <span class="review-label">ModelScope.ai Model:</span>
+            <span class="review-value" id="review-modelscopeModel">-</span>
           </div>
           <div class="review-item">
             <span class="review-label">API Key:</span>

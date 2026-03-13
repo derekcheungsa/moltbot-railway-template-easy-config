@@ -13,12 +13,14 @@
     authGroups: [],
     atlasModels: [],
     pairingRefreshTimer: null,
+    modelscopeModels: [],
     formData: {
       authGroup: '',
       authChoice: '',
       authSecret: '',
       flow: 'quickstart',
       atlasModel: 'moonshotai/kimi-k2.5',
+      modelscopeModel: 'zai-org/GLM-4.7-Flash',
       telegramToken: '',
       discordToken: '',
       slackBotToken: '',
@@ -45,6 +47,14 @@
     atlasModelContext: null,
     atlasModelInput: null,
     atlasModelOutput: null,
+    modelscopeModelGroup: null,
+    modelscopeModel: null,
+    modelscopeModelInfo: null,
+    modelscopeModelName: null,
+    modelscopeModelDesc: null,
+    modelscopeModelContext: null,
+    modelscopeModelInput: null,
+    modelscopeModelOutput: null,
     telegramToken: null,
     discordToken: null,
     slackBotToken: null,
@@ -147,6 +157,14 @@
     els.atlasModelContext = $('#atlas-model-context');
     els.atlasModelInput = $('#atlas-model-input');
     els.atlasModelOutput = $('#atlas-model-output');
+    els.modelscopeModelGroup = $('#modelscope-model-group');
+    els.modelscopeModel = $('#modelscopeModel');
+    els.modelscopeModelInfo = $('#modelscope-model-info');
+    els.modelscopeModelName = $('#modelscope-model-name');
+    els.modelscopeModelDesc = $('#modelscope-model-desc');
+    els.modelscopeModelContext = $('#modelscope-model-context');
+    els.modelscopeModelInput = $('#modelscope-model-input');
+    els.modelscopeModelOutput = $('#modelscope-model-output');
     els.telegramToken = $('#telegramToken');
     els.discordToken = $('#discordToken');
     els.slackBotToken = $('#slackBotToken');
@@ -278,6 +296,7 @@
     state.formData.authSecret = els.authSecret ? els.authSecret.value : '';
     state.formData.flow = els.flow ? els.flow.value : 'quickstart';
     state.formData.atlasModel = els.atlasModel ? els.atlasModel.value : 'minimaxai/minimax-m2.5';
+    state.formData.modelscopeModel = els.modelscopeModel ? els.modelscopeModel.value : 'zai-org/GLM-4.7-Flash';
     state.formData.telegramToken = els.telegramToken ? els.telegramToken.value : '';
     state.formData.discordToken = els.discordToken ? els.discordToken.value : '';
     state.formData.slackBotToken = els.slackBotToken ? els.slackBotToken.value : '';
@@ -301,6 +320,9 @@
     }
     if (els.atlasModel && state.formData.atlasModel) {
       els.atlasModel.value = state.formData.atlasModel;
+    }
+    if (els.modelscopeModel && state.formData.modelscopeModel) {
+      els.modelscopeModel.value = state.formData.modelscopeModel;
     }
     if (els.telegramToken && state.formData.telegramToken) {
       els.telegramToken.value = state.formData.telegramToken;
@@ -409,6 +431,26 @@
         atlasModelEl.style.color = 'var(--success)';
       } else {
         hideElement(atlasModelRow);
+      }
+    }
+
+    // Show ModelScope model in review if selected
+    var modelscopeModelRow = $('#review-modelscope-model-row');
+    var modelscopeModelEl = $('#review-modelscopeModel');
+    if (modelscopeModelRow && modelscopeModelEl) {
+      if (state.formData.authChoice === 'modelscope-api-key' && state.formData.modelscopeModel) {
+        showElement(modelscopeModelRow);
+        var msModelName = state.formData.modelscopeModel;
+        for (var mi = 0; mi < state.modelscopeModels.length; mi++) {
+          if (state.modelscopeModels[mi].id === state.formData.modelscopeModel) {
+            msModelName = state.modelscopeModels[mi].name;
+            break;
+          }
+        }
+        setText(modelscopeModelEl, msModelName);
+        modelscopeModelEl.style.color = 'var(--success)';
+      } else {
+        hideElement(modelscopeModelRow);
       }
     }
 
@@ -526,6 +568,21 @@
         hideElement(els.atlasModelGroup);
       }
     }
+
+    // Show/hide ModelScope model dropdown
+    if (els.modelscopeModelGroup) {
+      if (selectedGroup && selectedGroup.value === 'modelscope' && selectedGroup.models) {
+        state.modelscopeModels = selectedGroup.models;
+        populateModelscopeModels(selectedGroup.models);
+        showElement(els.modelscopeModelGroup);
+        if (state.formData.modelscopeModel) {
+          els.modelscopeModel.value = state.formData.modelscopeModel;
+          updateModelscopeModelInfo();
+        }
+      } else {
+        hideElement(els.modelscopeModelGroup);
+      }
+    }
   }
 
   // ===================================
@@ -574,6 +631,52 @@
       if (els.atlasModelOutput) setText(els.atlasModelOutput, selectedModel.outputPrice.toFixed(2));
     } else {
       hideElement(els.atlasModelInfo);
+    }
+  }
+
+  // ===================================
+  // ModelScope Model Selection
+  // ===================================
+  function populateModelscopeModels(models) {
+    if (!els.modelscopeModel) return;
+
+    els.modelscopeModel.innerHTML = '';
+
+    for (var i = 0; i < models.length; i++) {
+      var m = models[i];
+      var opt = document.createElement('option');
+      opt.value = m.id;
+      opt.textContent = m.name;
+      els.modelscopeModel.appendChild(opt);
+    }
+
+    els.modelscopeModel.onchange = updateModelscopeModelInfo;
+
+    updateModelscopeModelInfo();
+  }
+
+  function updateModelscopeModelInfo() {
+    if (!els.modelscopeModel || !els.modelscopeModelInfo || !state.modelscopeModels) return;
+
+    var selectedId = els.modelscopeModel.value;
+    var selectedModel = null;
+
+    for (var j = 0; j < state.modelscopeModels.length; j++) {
+      if (state.modelscopeModels[j].id === selectedId) {
+        selectedModel = state.modelscopeModels[j];
+        break;
+      }
+    }
+
+    if (selectedModel) {
+      showElement(els.modelscopeModelInfo);
+      if (els.modelscopeModelName) setText(els.modelscopeModelName, selectedModel.name);
+      if (els.modelscopeModelDesc) setText(els.modelscopeModelDesc, selectedModel.description || '');
+      if (els.modelscopeModelContext) setText(els.modelscopeModelContext, formatNumber(selectedModel.contextWindow / 1000) + 'K');
+      if (els.modelscopeModelInput) setText(els.modelscopeModelInput, selectedModel.inputPrice.toFixed(2));
+      if (els.modelscopeModelOutput) setText(els.modelscopeModelOutput, selectedModel.outputPrice.toFixed(2));
+    } else {
+      hideElement(els.modelscopeModelInfo);
     }
   }
 
@@ -813,6 +916,7 @@
       authChoice: state.formData.authChoice,
       authSecret: state.formData.authSecret,
       atlasModel: state.formData.atlasModel,
+      modelscopeModel: state.formData.modelscopeModel,
       telegramToken: state.formData.telegramToken,
       discordToken: state.formData.discordToken,
       slackBotToken: state.formData.slackBotToken,
@@ -959,6 +1063,7 @@
           authSecret: '',
           flow: 'quickstart',
           atlasModel: 'moonshotai/kimi-k2.5',
+          modelscopeModel: 'zai-org/GLM-4.7-Flash',
           telegramToken: '',
           discordToken: '',
           slackBotToken: '',
