@@ -1,0 +1,5 @@
+FROM ghcr.io/derekcheungsa/openclaw-railway-template-easy-config:latest
+# Everything is pre-built — just expose and run
+ENV PORT=8080
+EXPOSE 8080
+CMD ["node", "src/server.js"]
